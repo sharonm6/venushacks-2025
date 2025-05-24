@@ -18,5 +18,6 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 const profilesCollection = collection(db, "profiles");
+const conversationsCollection = collection(db, "conversations");
 
-export { app, db, storage, profilesCollection };
+export { app, db, storage, profilesCollection, conversationsCollection };

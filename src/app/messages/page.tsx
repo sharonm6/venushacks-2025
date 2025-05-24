@@ -1,7 +1,7 @@
 "use client";
 
 import ChatBubbles, { Message } from "@/components/chat-bubbles";
-import ChatList, { Chat } from "@/components/chat-list";
+import ChatList from "@/components/chat-list";
 import MeetVerification from "@/components/meet-verification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Send, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { index } from "@/services/conversations";
+import { Chat, Conversation } from "@/lib/types";
 
 // Mock data - this would come from your backend
 const mockChats: Chat[] = [
@@ -26,7 +29,6 @@ const mockChats: Chat[] = [
     lastMessage: "Perfect! Let's meet at 2:30",
     timestamp: "10:42 AM",
     unreadCount: 2,
-    isOnline: true,
   },
   {
     id: 2,
@@ -36,7 +38,6 @@ const mockChats: Chat[] = [
     lastMessage: "Thanks for the help with the project!",
     timestamp: "Yesterday",
     unreadCount: 0,
-    isOnline: false,
   },
   {
     id: 3,
@@ -46,7 +47,6 @@ const mockChats: Chat[] = [
     lastMessage: "See you at the meeting tomorrow",
     timestamp: "Yesterday",
     unreadCount: 1,
-    isOnline: true,
   },
 ];
 
@@ -106,8 +106,19 @@ const mockMessages: Record<number, Message[]> = {
 
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showMeetVerification, setShowMeetVerification] = useState(false);
   const currentUserId = "currentUser"; // This would come from your auth system
+
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const loadConversations = async () => {
+    const conversations = await index();
+
+    setConversations(conversations);
+  };
 
   const handleChatSelect = (chat: Chat) => {
     setSelectedChat(chat);
@@ -145,9 +156,7 @@ export default function MessagesPage() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <div>
                     <CardTitle>{selectedChat.name}</CardTitle>
-                    <CardDescription>
-                      {selectedChat.isOnline ? "Online" : "Offline"}
-                    </CardDescription>
+                    {/* <CardDescription></CardDescription> */}
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
