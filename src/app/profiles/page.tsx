@@ -14,7 +14,6 @@ export default function Posts() {
   const loadProfiles = async () => {
     const profiles = await index();
 
-    console.log("Profiles", profiles);
     setProfiles(profiles);
   };
 
