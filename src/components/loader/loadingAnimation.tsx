@@ -89,23 +89,6 @@ const LoadingAnimation = ({ text, subtext }: LoadingAnimationProps) => {
           style={{ animationDelay: "0.2s" }}
         ></div>
       </div>
-
-      {/* Optional: Decorative elements */}
-      <div className="absolute top-20 left-20 w-4 h-4 text-pink-300 animate-pulse">
-        ✨
-      </div>
-      <div
-        className="absolute top-32 right-24 w-3 h-3 text-purple-300 animate-pulse"
-        style={{ animationDelay: "0.5s" }}
-      >
-        💫
-      </div>
-      <div
-        className="absolute bottom-32 left-32 w-3 h-3 text-yellow-300 animate-pulse"
-        style={{ animationDelay: "1s" }}
-      >
-        ⭐
-      </div>
     </div>
   );
 };
