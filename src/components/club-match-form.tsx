@@ -236,7 +236,7 @@ export default function ClubMatchingSurvey() {
                 className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white w-full"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                See My Matches
+                Check your mailbox!
               </Button>
             </CardContent>
           </Card>

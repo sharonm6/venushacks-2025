@@ -2,6 +2,7 @@
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import { Heart, Star, Users, Trophy, MapPin, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 interface Club {
   id: number;
