@@ -1,4 +1,5 @@
 export interface Profile {
+  id: string;
   name: string;
 }
 
@@ -12,10 +13,28 @@ export interface Conversation {
 
 export interface Chat {
   id: number;
+  conversationid: string;
   userId: string;
   name: string;
   avatar: string;
   lastMessage: string;
   timestamp: string;
-  unreadCount: number;
+}
+
+export interface Message {
+  id: string;
+  conversationid: string;
+  senderid: string;
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  message: string;
+  timestamp: string;
+  isCurrentUser: boolean;
 }
