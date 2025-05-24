@@ -30,7 +30,7 @@ export default function ClubBanner() {
       {/* Banner Section */}
       <section className="flex w-full flex-col space-y-3 h-full overflow-hidden">
         {/* Club Banner */}
-        <Card className="w-full flex-shrink-0">
+        <Card className="w-full flex-shrink-0 bg-white/80 backdrop-blur-sm border-2 border-venus-200 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div className="flex flex-row items-center space-x-4">
               <Avatar className="h-16 w-16 p-2">
