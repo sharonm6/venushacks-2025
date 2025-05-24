@@ -52,7 +52,7 @@ const feedItems = [
 export default function Feed() {
   return (
     <div className="flex w-full">
-      <Card className="w-full">
+      <Card className="w-full bg-white/80 backdrop-blur-sm border-2 border-venus-200 shadow-lg">
         <CardHeader>
           <CardTitle>Feed</CardTitle>
         </CardHeader>

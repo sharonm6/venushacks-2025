@@ -1,0 +1,494 @@
+"use client";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Eye,
+  EyeOff,
+  Edit3,
+  Save,
+  X,
+  Users,
+  GraduationCap,
+  BookOpen,
+  User,
+  Heart,
+  Calendar,
+  Pencil,
+  Check,
+} from "lucide-react";
+import { useState } from "react";
+
+interface JoinedClub {
+  id: number;
+  name: string;
+  category: string;
+  avatar: string;
+  joinDate: string;
+}
+
+interface UserProfile {
+  id: string;
+  picture: string;
+  name: string;
+  pronouns: string;
+  year: string;
+  major: string;
+  bio: string;
+  isHidden: boolean;
+  joinedClubs: JoinedClub[];
+}
+
+// Available avatars in public folder
+const AVAILABLE_AVATARS = [
+  "/avatars/avatar1.svg",
+  "/avatars/avatar2.svg",
+  "/avatars/avatar3.svg",
+  "/avatars/avatar4.svg",
+  "/avatars/avatar5.svg",
+  "/avatars/avatar6.svg",
+  "/avatars/avatar7.svg",
+  "/avatars/avatar8.svg",
+  "/avatars/avatar9.svg",
+  "/avatars/avatar10.svg",
+  "/avatars/avatar11.svg",
+  "/avatars/avatar12.svg",
+];
+
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<UserProfile>({
+    id: "user123",
+    picture: "/avatars/avatar1.svg",
+    name: "Sharon Ma",
+    pronouns: "she/her",
+    year: "Junior",
+    major: "Computer Science",
+    bio: "Passionate about building inclusive tech communities and creating meaningful software solutions. Love hackathons, mentoring, and exploring new technologies. Always excited to connect with fellow developers and learn from diverse perspectives! 🚀",
+    isHidden: false,
+    joinedClubs: [
+      {
+        id: 1,
+        name: "WICS",
+        category: "Computer Science",
+        avatar: "/placeholder.svg?height=40&width=40",
+        joinDate: "September 2023",
+      },
+      {
+        id: 2,
+        name: "Hack at UCI",
+        category: "Technology",
+        avatar: "/placeholder.svg?height=40&width=40",
+        joinDate: "October 2023",
+      },
+      {
+        id: 3,
+        name: "ICS Student Council",
+        category: "Student Government",
+        avatar: "/placeholder.svg?height=40&width=40",
+        joinDate: "January 2024",
+      },
+    ],
+  });
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProfile, setEditedProfile] = useState(profile);
+  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+
+  const toggleVisibility = () => {
+    setProfile((prev) => ({ ...prev, isHidden: !prev.isHidden }));
+  };
+
+  const handleEdit = () => {
+    setEditedProfile(profile);
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    setProfile(editedProfile);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditedProfile(profile);
+    setIsEditing(false);
+  };
+
+  const handleInputChange = (field: keyof UserProfile, value: string) => {
+    setEditedProfile((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAvatarSelect = (avatarUrl: string) => {
+    setEditedProfile((prev) => ({ ...prev, picture: avatarUrl }));
+    setIsAvatarDialogOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-venus-light p-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header with Privacy Controls */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-venus-purple-900">
+            My Profile
+          </h1>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleVisibility}
+              className={`${
+                profile.isHidden
+                  ? "bg-red-50 border-red-300 text-red-700 hover:bg-red-100"
+                  : "bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
+              }`}
+            >
+              {profile.isHidden ? (
+                <>
+                  <EyeOff className="w-4 h-4 mr-2" />
+                  Hidden
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Visible
+                </>
+              )}
+            </Button>
+            {!isEditing ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEdit}
+                className="text-venus-purple-700 border-venus-purple-300"
+              >
+                <Edit3 className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                  className="text-red-700 border-red-300 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  className="bg-venus-primary hover:bg-venus-secondary text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Privacy Notice */}
+        {profile.isHidden && (
+          <Card className="mb-6 bg-red-50 border-red-200">
+            <CardContent className="p-4">
+              <div className="flex items-center text-red-700">
+                <EyeOff className="w-5 h-5 mr-2" />
+                <span className="text-sm font-medium">
+                  Your profile is hidden. Other users cannot see your name or
+                  picture.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Main Profile Card */}
+        <Card className="mb-6 bg-white/80 backdrop-blur-sm border-2 border-venus-200 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Profile Picture */}
+              <div className="flex justify-center md:justify-start">
+                <div className="relative">
+                  {profile.isHidden ? (
+                    <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center border-4 border-venus-200">
+                      <User className="w-8 h-8 text-gray-500" />
+                    </div>
+                  ) : (
+                    <Avatar className="w-24 h-24 border-4 border-venus-300 shadow-lg">
+                      <AvatarImage
+                        src={
+                          isEditing ? editedProfile.picture : profile.picture
+                        }
+                        alt={profile.name}
+                      />
+                      <AvatarFallback className="bg-venus-primary text-white text-xl">
+                        {profile.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  {isEditing && !profile.isHidden && (
+                    <Dialog
+                      open={isAvatarDialogOpen}
+                      onOpenChange={setIsAvatarDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-venus-primary hover:bg-venus-secondary"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle className="text-venus-purple-900">
+                            Choose Your Avatar
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="grid grid-cols-4 gap-3 mt-4">
+                          {AVAILABLE_AVATARS.map((avatarUrl, index) => (
+                            <div
+                              key={index}
+                              className="relative cursor-pointer group"
+                              onClick={() => handleAvatarSelect(avatarUrl)}
+                            >
+                              <Avatar className="w-16 h-16 border-2 border-venus-200 group-hover:border-venus-400 transition-colors">
+                                <AvatarImage
+                                  src={avatarUrl}
+                                  alt={`Avatar ${index + 1}`}
+                                />
+                                <AvatarFallback className="bg-venus-100">
+                                  {index + 1}
+                                </AvatarFallback>
+                              </Avatar>
+                              {editedProfile.picture === avatarUrl && (
+                                <div className="absolute inset-0 bg-venus-primary/20 rounded-full flex items-center justify-center">
+                                  <Check className="w-6 h-6 text-venus-primary" />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className="flex-1 text-center md:text-left">
+                {/* Name */}
+                {isEditing ? (
+                  <div className="mb-3">
+                    <Label htmlFor="name" className="text-venus-purple-700">
+                      Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={editedProfile.name}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                ) : (
+                  <h2 className="text-2xl font-bold text-venus-purple-900 mb-2">
+                    {profile.isHidden ? "Hidden User" : profile.name}
+                  </h2>
+                )}
+
+                {/* Pronouns */}
+                {isEditing ? (
+                  <div className="mb-3">
+                    <Label htmlFor="pronouns" className="text-venus-purple-700">
+                      Pronouns
+                    </Label>
+                    <Input
+                      id="pronouns"
+                      value={editedProfile.pronouns}
+                      onChange={(e) =>
+                        handleInputChange("pronouns", e.target.value)
+                      }
+                      className="mt-1"
+                      placeholder="e.g., she/her, he/him, they/them"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center md:justify-start mb-3">
+                    <Badge
+                      variant="outline"
+                      className="text-venus-purple-600 border-venus-purple-300"
+                    >
+                      {profile.pronouns}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Academic Info */}
+                {isEditing ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="year" className="text-venus-purple-700">
+                        Year
+                      </Label>
+                      <Input
+                        id="year"
+                        value={editedProfile.year}
+                        onChange={(e) =>
+                          handleInputChange("year", e.target.value)
+                        }
+                        className="mt-1"
+                        placeholder="e.g., Freshman, Sophomore"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="major" className="text-venus-purple-700">
+                        Major
+                      </Label>
+                      <Input
+                        id="major"
+                        value={editedProfile.major}
+                        onChange={(e) =>
+                          handleInputChange("major", e.target.value)
+                        }
+                        className="mt-1"
+                        placeholder="e.g., Computer Science"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                    <div className="flex items-center justify-center md:justify-start">
+                      <Calendar className="w-4 h-4 text-venus-purple-600 mr-2" />
+                      <span className="text-venus-purple-700 font-medium">
+                        {profile.year}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center md:justify-start">
+                      <GraduationCap className="w-4 h-4 text-venus-purple-600 mr-2" />
+                      <span className="text-venus-purple-700 font-medium">
+                        {profile.major}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bio Section */}
+        <Card className="mb-6 bg-white/80 backdrop-blur-sm border-2 border-venus-200 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center text-venus-purple-900">
+              <BookOpen className="w-5 h-5 mr-2" />
+              About Me
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <div>
+                <Label htmlFor="bio" className="text-venus-purple-700">
+                  Bio
+                </Label>
+                <Textarea
+                  id="bio"
+                  value={editedProfile.bio}
+                  onChange={(e) => handleInputChange("bio", e.target.value)}
+                  className="mt-1 min-h-[100px]"
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
+            ) : (
+              <p className="text-venus-purple-700 leading-relaxed">
+                {profile.bio}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Joined Clubs Section */}
+        <Card className="bg-white/80 backdrop-blur-sm border-2 border-venus-200 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center text-venus-purple-900">
+              <Heart className="w-5 h-5 mr-2" />
+              My Clubs
+              <Badge className="ml-2 bg-venus-200 text-venus-purple-800">
+                {profile.joinedClubs.length} clubs
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {profile.joinedClubs.map((club) => (
+                <div
+                  key={club.id}
+                  className="flex items-center p-4 rounded-xl border-2 border-venus-100 hover:border-venus-300 transition-all duration-300 hover:shadow-md bg-venus-50/50"
+                >
+                  {/* Club Avatar */}
+                  <Avatar className="w-12 h-12 mr-4">
+                    <AvatarImage src={club.avatar} alt={club.name} />
+                    <AvatarFallback className="bg-venus-300 text-venus-purple-800">
+                      {club.name.substring(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {/* Club Info */}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-venus-purple-900 mb-1">
+                      {club.name}
+                    </h4>
+                    <p className="text-sm text-venus-purple-600">
+                      {club.category}
+                    </p>
+                  </div>
+
+                  {/* Join Date */}
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-venus-purple-900">
+                      Member since
+                    </p>
+                    <p className="text-xs text-venus-purple-600">
+                      {club.joinDate}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Browse Clubs Button */}
+            <div className="mt-6 text-center">
+              <Button className="bg-venus-primary hover:bg-venus-secondary text-white">
+                <Users className="w-4 h-4 mr-2" />
+                Browse More Clubs
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center mt-8 pb-6">
+          <p className="text-xs text-venus-purple-600">
+            Profile visibility can be toggled anytime in settings
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
