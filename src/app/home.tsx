@@ -1,10 +1,33 @@
-export default function Home() {
-    // return <img src="mailbox_mail_down.png" alt="Open mailbox with a letter" className="mx-auto w-64" />;
+'use client';
+import { useState, useEffect } from 'react';
 
-    // make image fit to page and sit at bottom of the page without scrolling
+export default function Home() {
+    const [isMailboxOpen, setIsMailboxOpen] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsMailboxOpen(true);
+        }, 1500);
+
+        // return () => clearTimeout(timer);
+    }, []);
+
+    const handleMailboxClick = () => {
+        if (isMailboxOpen) {
+            window.location.href = '/survey';
+        }
+    };
+
     return (
         <div className="mx-auto flex w-full flex-col space-y-8 pt-8">
-            <img className="mx-auto w-1/2 object-contain" src="mailbox_mail_down.png" alt="Open mailbox with a letter"/>
+            {/* animation for closed to open mailbox with letter */}
+            <img 
+                className="mx-auto w-1/2 object-contain transition-opacity duration-500" 
+                src={isMailboxOpen ? "mailbox_mail_down.png" : "mailbox_closed.png"} 
+                alt={isMailboxOpen ? "Open mailbox with a letter" : "Closed mailbox"}
+                onClick={isMailboxOpen ? handleMailboxClick : undefined}
+                style={{cursor: isMailboxOpen ? 'pointer' : 'default'}}
+            />
             <h1 className="text-center text-4xl font-bold">Welcome to *name here*</h1>
             <p className="text-center text-lg">Looks like you've got mail :D</p>
 
