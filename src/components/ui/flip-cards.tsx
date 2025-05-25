@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Eye, Check, Plus, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { doc, updateDoc } from "firebase/firestore";
+import { profile } from "console";
+import { profilesCollection } from "@/utils/firebase.browser";
 
 type Testimonial = {
   description: string;
@@ -202,6 +205,8 @@ export const FlippableCards = ({
   joinedClubs: string[];
   setJoinedClubs: (clubs: string[] | ((prev: string[]) => string[])) => void;
 }) => {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+
   const [active, setActive] = useState(0);
   const [justJoinedClub, setJustJoinedClub] = useState<string | null>(null);
 
@@ -227,7 +232,28 @@ export const FlippableCards = ({
     setJoinedClubs((prev) => [...prev, clubId]);
     setJustJoinedClub(clubId);
 
-    // TODO: Here you would typically make an API call to join the club
+    const now = new Date();
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const formattedDate = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+    const profileRef = doc(profilesCollection, userid || "");
+    updateDoc(profileRef, {
+      joinedClubs: joinedClubs.concat(clubId + formattedDate),
+    });
+
     console.log(`Joined club: ${clubName} (ID: ${clubId})`);
   }, []);
 
@@ -235,7 +261,7 @@ export const FlippableCards = ({
     (clubId: string) => {
       if (!clubId) return false;
       return (
-        joinedClubs.includes(clubId) ||
+        joinedClubs?.includes(clubId) ||
         testimonials.find((t) => t.id === clubId)?.isJoined
       );
     },

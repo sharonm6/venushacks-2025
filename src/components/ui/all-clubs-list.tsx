@@ -4,6 +4,7 @@ import { FlippableCards } from "@/components/ui/flip-cards";
 import { clubsDatabase, type Club } from "@/lib/clubDatabase";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { index } from "@/services/profiles";
 
 // Define Club interface to match the testimonial structure
 interface ClubTestimonial {
@@ -16,10 +17,6 @@ interface ClubTestimonial {
   id: string;
   isJoined: boolean;
 }
-
-// TODO: Replace with actual user data from database
-// Mock current user's joined clubs (hardcoded for now)
-const userJoinedClubIds = ["wics", "hack", "icssc"];
 
 // Function to convert Club to ClubTestimonial format
 const convertClubToTestimonial = (
@@ -42,10 +39,17 @@ const convertClubToTestimonial = (
 interface ClubFlippableCardsProps {
   clubs: ClubTestimonial[];
   autoplay?: boolean;
+  joinedClubs: string[];
+  setJoinedClubs: (clubs: string[] | ((prev: string[]) => string[])) => void;
 }
 
 const ClubFlippableCards = React.memo(
-  ({ clubs, autoplay = false }: ClubFlippableCardsProps) => {
+  ({
+    clubs,
+    autoplay = false,
+    joinedClubs = [],
+    setJoinedClubs,
+  }: ClubFlippableCardsProps) => {
     const [activeIndex, setActiveIndex] = useState<number>(0);
     const router = useRouter();
 
@@ -108,6 +112,9 @@ const ClubFlippableCards = React.memo(
               onActiveChange={setActiveIndex}
               onVisitWebsite={handleVisitWebsite}
               onViewClubPage={handleViewClubPage}
+              setJoinedClubs={setJoinedClubs}
+              joinedClubs={joinedClubs}
+              setJoinedClubs={setJoinedClubs}
             />
           </div>
         </div>
@@ -130,13 +137,26 @@ const ClubFlippableCards = React.memo(
 ClubFlippableCards.displayName = "ClubFlippableCards";
 
 export function AllClubsList() {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+  const [joinedClubs, setJoinedClubs] = useState<string[]>([]);
+
   const [fadeIn, setFadeIn] = useState(false);
   const [clubTestimonials, setClubTestimonials] = useState<ClubTestimonial[]>(
     []
   );
   const [loading, setLoading] = useState(true);
 
+  const loadJoinedClubs = async () => {
+    const profile = await index(userid);
+
+    setJoinedClubs(
+      profile.clubs.split(",").map((club) => club.split("(")[0]) || []
+    );
+  };
+
   useEffect(() => {
+    loadJoinedClubs();
+
     // Load clubs data
     const loadClubs = async () => {
       try {
@@ -148,8 +168,7 @@ export function AllClubsList() {
 
         // Convert clubs to testimonial format with join status
         const testimonials: ClubTestimonial[] = allClubs.map((club) => {
-          // TODO: Replace with actual database query to check if user has joined club
-          const isJoined = userJoinedClubIds.includes(club.id);
+          const isJoined = joinedClubs.includes(club.id);
           return convertClubToTestimonial(club, isJoined);
         });
 
@@ -219,7 +238,12 @@ export function AllClubsList() {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-purple-100 opacity-30"></div>
       <div className="relative z-10 mx-auto flex h-full w-full flex-col">
-        <ClubFlippableCards clubs={clubTestimonials} autoplay={false} />
+        <ClubFlippableCards
+          clubs={clubTestimonials}
+          autoplay={false}
+          joinedClubs={joinedClubs}
+          setJoinedClubs={setJoinedClubs}
+        />
       </div>
     </div>
   );

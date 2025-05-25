@@ -16,9 +16,6 @@ interface ClubTestimonial {
   id: string; // Add club ID for navigation
 }
 
-// Mock current user's joined clubs
-const userJoinedClubIds = ["wics", "hack", "icssc"];
-
 // Function to convert Club to ClubTestimonial format
 const convertClubToTestimonial = (club: Club): ClubTestimonial => {
   // Generate a placeholder image based on club category/name
