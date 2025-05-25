@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Check, Clock, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Mock user data
 const users = {
@@ -16,9 +16,22 @@ const users = {
   },
 };
 
-export default function MeetVerification() {
-  const [currentUserReady, setCurrentUserReady] = useState(false);
-  const [otherUserReady, setOtherUserReady] = useState(false);
+export default function MeetVerification({
+  agreedA,
+  agreedB,
+  handleMeetReady,
+}: {
+  agreedA: boolean;
+  agreedB: boolean;
+  handleMeetReady: (ready: boolean) => void;
+}) {
+  const [currentUserReady, setCurrentUserReady] = useState(agreedA);
+  const [otherUserReady, setOtherUserReady] = useState(agreedB);
+
+  const handleCurrentUserReady = () => {
+    handleMeetReady(!currentUserReady);
+    setCurrentUserReady(!currentUserReady);
+  };
 
   const bothReady = currentUserReady && otherUserReady;
 
@@ -111,7 +124,7 @@ export default function MeetVerification() {
         <div className="space-y-3">
           {/* Current User Ready Button */}
           <Button
-            onClick={() => setCurrentUserReady(!currentUserReady)}
+            onClick={handleCurrentUserReady}
             className={`w-full ${
               currentUserReady
                 ? "bg-green-500 hover:bg-green-600"
