@@ -58,7 +58,11 @@ export default function MessagesPage() {
   );
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const currentUserId = "jZDLVSPOI9A3xQQhwEef"; // This would come from your auth system
+  let currentUserId = "";
+
+  useEffect(() => {
+    currentUserId = localStorage.getItem("userId") || "";
+  }, []);
 
   // BACKEND NOTE: These functions remain the same but need to handle the new agreedA/agreedB logic
   const loadUserProfile = async (userId: string) => {

@@ -81,3 +81,16 @@ export interface FeedItem {
   comments: number;
   commentsString: string;
 }
+
+export interface Account {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface Match {
+  id: string;
+  userid: string;
+  matches: string;
+}

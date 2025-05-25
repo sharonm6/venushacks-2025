@@ -205,10 +205,14 @@ export const FlippableCards = ({
   joinedClubs: string[];
   setJoinedClubs: (clubs: string[] | ((prev: string[]) => string[])) => void;
 }) => {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
 
   const [active, setActive] = useState(0);
   const [justJoinedClub, setJustJoinedClub] = useState<string | null>(null);
+
+  useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
+  }, []);
 
   const handleNext = useCallback(() => {
     setActive((prev) => (prev + 1) % testimonials.length);

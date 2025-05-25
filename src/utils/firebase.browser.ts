@@ -21,6 +21,8 @@ const profilesCollection = collection(db, "profiles");
 const conversationsCollection = collection(db, "conversations");
 const messagesCollection = collection(db, "messages");
 const postsCollection = collection(db, "posts");
+const accountsCollection = collection(db, "accounts");
+const matchesCollection = collection(db, "matches");
 
 export {
   app,
@@ -30,4 +32,6 @@ export {
   conversationsCollection,
   messagesCollection,
   postsCollection,
+  accountsCollection,
+  matchesCollection,
 };

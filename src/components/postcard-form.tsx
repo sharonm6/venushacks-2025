@@ -17,6 +17,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { doc, updateDoc } from "firebase/firestore";
 import { profilesCollection } from "@/utils/firebase.browser";
 import { index } from "@/services/profiles";
+import { index as indexMatches } from "@/services/matches";
+import clubsDatabase from "@/lib/clubDatabase";
 
 interface Club {
   id: string;
@@ -56,48 +58,52 @@ const SparkleEffect = () => {
 };
 
 export default function ClubPostcard() {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
+
   const router = useRouter();
   const [joinedClubs, setJoinedClubs] = useState<string[]>([]);
   const [sparklingClubs, setSparklingClubs] = useState<Set<string>>(new Set());
+  const [clubs, setClubs] = useState<Club[]>([]);
 
-  // Sample data for each club: Must be taken from DB
-  // Only take top 3 clubs for the postcard
-  const clubs: Club[] = [
-    {
-      id: "wics",
-      name: "WICS",
-      avatar: "wics_logo.png?height=80&width=80",
-      description:
-        "WICS is a social and professional nonprofit organization at UCI established to encourage women to pursue a college degree and a successful career in the computer science field. We provide mentorship, socials, study sessions, company tours, professional workshops, and hackathons. WICS is open to people of all genders!",
-      members: 124,
-      category: "Computer Science",
-    },
-    {
-      id: "icssc",
-      name: "ICS Student Council",
-      avatar: "icssc_logo.png?height=80&width=80",
-      description:
-        "The official student government for the School of Information and Computer Sciences. We advocate for student interests, organize events, and bridge the gap between students and faculty.",
-      members: 89,
-      category: "Student Government",
-    },
-    {
-      id: "hack",
-      name: "Hack at UCI",
-      avatar: "hack_logo.png?height=80&width=80",
-      description:
-        "Hack at UCI is a student-run organization established to provide students with a platform to learn, grow, and develop technology of the future. We host hackathons, technical workshops, career panels, and events bringing in over 1000+ attendees annually. We organize Orange County's biggest annual hackathon, HackUCI, with 500+ students and ZotHacks for beginners.",
-      members: 500,
-      category: "Technology",
-    },
-  ];
+  useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
+  }, []);
 
   const loadJoinedClubs = async () => {
     const profile = await index(userid);
+    const matches = await indexMatches(userid);
 
-    setJoinedClubs(
-      profile.clubs.split(",").map((club) => club.split("(")[0]) || []
+    if (profile?.clubs) {
+      const joinedClubs =
+        profile.clubs.split(",").map((club) => club.split("(")[0]) || [];
+      setJoinedClubs(joinedClubs);
+    } else {
+      setJoinedClubs([]);
+    }
+
+    const extractClubSize = (clubSize: string): number => {
+      const match = clubSize.match(/\d+/);
+      return match ? parseInt(match[0]) : 0;
+    };
+
+    if (!matches || !matches.matches) {
+      setClubs([]);
+      return;
+    }
+
+    setClubs(
+      matches.matches.split(",").map((id) => ({
+        id,
+        name: clubsDatabase.getClubById(id)?.name || "Unknown Club",
+        avatar: clubsDatabase.getClubById(id)?.logo || "/placeholder.svg",
+        description:
+          clubsDatabase.getClubById(id)?.description ||
+          "No description available.",
+        members: extractClubSize(
+          clubsDatabase.getClubById(id)?.clubSize || "0"
+        ),
+        category: clubsDatabase.getClubById(id)?.category || "General",
+      }))
     );
   };
 
@@ -129,7 +135,7 @@ export default function ClubPostcard() {
         monthNames[now.getMonth()]
       } ${now.getFullYear()}`;
 
-      const profileRef = doc(profilesCollection, userid || "");
+      const profileRef = doc(profilesCollection, userid);
       const profile = await index(userid);
 
       updateDoc(profileRef, {

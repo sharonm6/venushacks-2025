@@ -21,6 +21,8 @@ import {
   Star,
   MapPin,
 } from "lucide-react";
+import { matchesCollection } from "@/utils/firebase.browser";
+import { addDoc } from "firebase/firestore";
 
 interface SurveyAnswer {
   questionId: string;
@@ -206,8 +208,16 @@ export default function ClubMatchingSurvey() {
     setCurrentQuestion(Math.max(0, currentQuestion - 1));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     console.log("Survey completed:", answers);
+
+    const userid = localStorage.getItem("userId") || "";
+
+    await addDoc(matchesCollection, {
+      userid: userid,
+      matches: "wics,hack,icssc",
+    });
+
     window.location.href = "/matches";
   };
 
