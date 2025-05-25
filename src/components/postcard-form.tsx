@@ -183,7 +183,10 @@ export default function ClubPostcard() {
                   >
                     {/* Club Avatar - Main Focus */}
                     <div className="flex justify-center mb-4">
-                      <div className="relative group/avatar">
+                      <div
+                        className="relative group/avatar cursor-pointer"
+                        onClick={() => handleViewClub(club.id)}
+                      >
                         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 p-1 group-hover/avatar:from-pink-400 group-hover/avatar:to-purple-500 transition-all duration-300 transform group-hover/avatar:scale-110 group-hover/avatar:rotate-3">
                           <img
                             src={club.avatar || "/placeholder.svg"}
@@ -197,7 +200,10 @@ export default function ClubPostcard() {
                     </div>
 
                     {/* Club Name */}
-                    <h3 className="text-lg font-bold text-purple-800 dark:text-purple-200 text-center mb-2 group-hover/club:text-pink-600 dark:group-hover/club:text-pink-400 transition-colors duration-300">
+                    <h3
+                      className="text-lg font-bold text-purple-800 dark:text-purple-200 text-center mb-2 group-hover/club:text-pink-600 dark:group-hover/club:text-pink-400 transition-colors duration-300 cursor-pointer hover:underline"
+                      onClick={() => handleViewClub(club.id)}
+                    >
                       {club.name}
                     </h3>
 
