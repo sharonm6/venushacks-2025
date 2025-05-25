@@ -20,7 +20,7 @@ import { index as indexConversations } from "@/services/conversations";
 import { index as indexProfiles } from "@/services/profiles";
 import { index as indexMessages } from "@/services/messages";
 
-import { Chat, Conversation, Message, ChatMessage } from "@/lib/types";
+import { Chat, Conversation, ChatMessage } from "@/lib/types";
 import { messagesCollection } from "@/utils/firebase.browser";
 import { query, where, orderBy } from "firebase/firestore";
 
@@ -81,6 +81,7 @@ import { query, where, orderBy } from "firebase/firestore";
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   // const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [userName, setUserName] = useState<string>("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [showMeetVerification, setShowMeetVerification] = useState(false);
@@ -137,10 +138,13 @@ export default function MessagesPage() {
             : conversation.useridA;
 
         const chatUserProfile = await loadUserProfile(chatUserId);
+        const userProfile = await loadUserProfile(currentUserId);
 
-        if (!chatUserProfile) {
-          return null; // Skip if profile not found
+        if (!chatUserProfile && !userProfile) {
+          return null; // Skip if profiles not found
         }
+
+        setUserName(userProfile!.name);
 
         const chatMessageInfo = await loadChatMessageInfo(conversation);
 
@@ -166,7 +170,10 @@ export default function MessagesPage() {
     loadChats();
   }, []);
 
-  const loadChatMessages = async (conversationid: string) => {
+  const loadChatMessages = async (
+    conversationid: string,
+    chatUserName: string
+  ) => {
     const chatMessages = await indexMessages(
       query(
         messagesCollection,
@@ -179,19 +186,23 @@ export default function MessagesPage() {
       chatMessages.map((chatMessage) => ({
         id: chatMessage.id,
         senderId: chatMessage.senderid,
-        senderName: "User",
+        senderName:
+          chatMessage.senderid === currentUserId ? userName : chatUserName,
         senderAvatar: "https://via.placeholder.com/40",
         message: chatMessage.content,
         timestamp: new Date(
           chatMessage.timestamp.seconds * 1000
-        ).toLocaleTimeString(),
+        ).toLocaleTimeString(navigator.language, {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         isCurrentUser: chatMessage.senderid === currentUserId,
       }))
     );
   };
 
   const handleChatSelect = (chat: Chat) => {
-    loadChatMessages(chat.conversationid);
+    loadChatMessages(chat.conversationid, chat.name);
     setSelectedChat(chat);
     setShowMeetVerification(false); // Close meet verification when switching chats
   };
