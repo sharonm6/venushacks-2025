@@ -28,6 +28,7 @@ import {
   Calendar,
   Pencil,
   Check,
+  MessageCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { index } from "@/services/profiles";
@@ -139,6 +140,10 @@ export default function ProfilePage() {
     setIsEditing(true);
   };
 
+  const handleMessage = () => {
+    // Placeholder for message functionality : only show if userProfile is not current User
+  };
+
   const handleSaveWrite = async (editedProfile: Profile) => {
     const conversationRef = doc(profilesCollection, userid || "");
 
@@ -185,6 +190,15 @@ export default function ProfilePage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={handleMessage}
+              className="text-venus-purple-700 border-venus-purple-300"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Message
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={toggleVisibility}
               className={`${
                 profile.isHidden
@@ -204,6 +218,7 @@ export default function ProfilePage() {
                 </>
               )}
             </Button>
+
             {!isEditing ? (
               <Button
                 variant="outline"
