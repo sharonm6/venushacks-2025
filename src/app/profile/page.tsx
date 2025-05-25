@@ -267,27 +267,31 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row gap-6">
               {/* Profile Picture */}
               <div className="flex justify-center md:justify-start">
-                <div className="relative">
-                  {profile.isHidden ? (
-                    <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center border-4 border-venus-200">
-                      <User className="w-8 h-8 text-gray-500" />
-                    </div>
-                  ) : (
-                    <Avatar className="w-24 h-24 border-4 border-venus-300 shadow-lg">
-                      <AvatarImage
-                        src={
-                          isEditing ? editedProfile.picture : profile.picture
-                        }
-                        alt={profile.name}
-                      />
-                      <AvatarFallback className="bg-venus-primary text-white text-xl">
-                        {profile.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    {profile.isHidden ? (
+                      <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center border-4 border-venus-200">
+                        <User className="w-8 h-8 text-gray-500" />
+                      </div>
+                    ) : (
+                      <Avatar className="w-24 h-24 border-4 border-venus-300 shadow-lg">
+                        <AvatarImage
+                          src={
+                            isEditing ? editedProfile.picture : profile.picture
+                          }
+                          alt={profile.name}
+                        />
+                        <AvatarFallback className="bg-venus-primary text-white text-xl">
+                          {profile.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+
+                  {/* Pencil button appears to the right of avatar when editing and profile is not hidden */}
                   {isEditing && !profile.isHidden && (
                     <Dialog
                       open={isAvatarDialogOpen}
@@ -296,7 +300,7 @@ export default function ProfilePage() {
                       <DialogTrigger asChild>
                         <Button
                           size="sm"
-                          className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-venus-primary hover:bg-venus-secondary"
+                          className="rounded-full w-8 h-8 p-0 bg-venus-primary hover:bg-venus-secondary"
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
