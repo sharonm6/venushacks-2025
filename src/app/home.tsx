@@ -5,6 +5,7 @@ import AvatarWithSpeechBubble from "@/components/avatar-speech-bubble";
 import LoadingAnimation from "@/components/loader/loadingAnimation";
 
 export default function Home() {
+  const [userId, setUserId] = useState<string | null>("");
   const [mailStatus, setMailStatus] = useState<
     "loading" | "empty" | "received"
   >("loading");
@@ -16,6 +17,10 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    if (localStorage.getItem("userId")) {
+      setUserId(localStorage.getItem("userId"));
+    }
+
     // Check database for mail status
     fetchUserMailStatus().then((status) => {
       setMailStatus(status);
@@ -29,7 +34,7 @@ export default function Home() {
   }, []);
 
   const handleMailboxClick = () => {
-    if (mailStatus === "received") {
+    if (userId) {
       // Start navigation sequence
       setIsNavigating(true);
       setShowAvatar(false); // Hide avatar immediately
@@ -48,9 +53,9 @@ export default function Home() {
       setTimeout(() => {
         router.push("/matches");
       }, 3500); // Navigate 0.5s after fade starts
-    } else if (mailStatus === "empty") {
+    } else if (!userId) {
       // Go to survey to get matched
-      router.push("/survey");
+      router.push("/signup");
     }
   };
 

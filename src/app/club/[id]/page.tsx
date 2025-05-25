@@ -7,12 +7,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { index as indexProfiles } from "@/services/profiles";
 
 export default function ClubPage() {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
   const params = useParams();
   const clubId = params.id as string;
   const [club, setClub] = useState<Club | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialJoined, setInitialJoined] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
+  }, []);
 
   const loadClubInfo = async () => {
     const foundClub = clubsDatabase.getClubById(clubId);

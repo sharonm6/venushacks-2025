@@ -10,8 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, Lock, Heart, Users, UserPlus } from "lucide-react";
+import { Mail, Lock, Heart, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { addDoc, doc, setDoc } from "firebase/firestore";
+import {
+  accountsCollection,
+  profilesCollection,
+} from "@/utils/firebase.browser";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -27,17 +32,43 @@ export default function SignupPage() {
     setIsLoading(true);
 
     // Basic validation
+    if (email.includes("@uci.edu") === false) {
+      alert("Must sign up with UCI email!");
+      setIsLoading(false);
+      return;
+    }
     if (password !== confirmPassword) {
       alert("Passwords don't match!");
       setIsLoading(false);
       return;
     }
 
-    // Add your signup logic here
-    setTimeout(() => {
+    setTimeout(async () => {
+      const newAccount = await addDoc(accountsCollection, {
+        email: email,
+        password: password,
+        name: firstName + lastName,
+      }).then((docRef) => {
+        return { id: docRef.id, email, password, name: firstName + lastName };
+      });
+
+      const profileRef = doc(profilesCollection, newAccount.id);
+
+      await setDoc(profileRef, {
+        picture: "/avatar0.png",
+        name: firstName + " " + lastName,
+        pronouns: "",
+        year: "",
+        major: "",
+        bio: "",
+        isHidden: false,
+        clubs: "",
+      });
+
+      localStorage.setItem("userId", newAccount.id);
+
       setIsLoading(false);
-      // Redirect to profile after signup
-      router.push("/profile");
+      router.push("/survey");
     }, 2000);
   };
 

@@ -136,8 +136,12 @@ const ClubFlippableCards = React.memo(
 ClubFlippableCards.displayName = "ClubFlippableCards";
 
 export function AllClubsList() {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
   const [joinedClubs, setJoinedClubs] = useState<string[]>([]);
+
+  useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
+  }, []);
 
   const [fadeIn, setFadeIn] = useState(false);
   const [clubTestimonials, setClubTestimonials] = useState<ClubTestimonial[]>(
@@ -148,9 +152,13 @@ export function AllClubsList() {
   const loadJoinedClubs = async () => {
     const profile = await index(userid);
 
-    setJoinedClubs(
-      profile.clubs.split(",").map((club) => club.split("(")[0]) || []
-    );
+    if (profile?.clubs) {
+      setJoinedClubs(
+        profile.clubs.split(",").map((club) => club.split("(")[0]) || []
+      );
+      return;
+    }
+    setJoinedClubs([]);
   };
 
   useEffect(() => {

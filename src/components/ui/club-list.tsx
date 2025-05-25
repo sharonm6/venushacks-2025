@@ -121,19 +121,24 @@ const ClubFlippableCards = ({
 };
 
 export function UserJoinedClubs() {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
   const [joinedClubs, setJoinedClubs] = useState<string[]>([]);
 
   useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
     loadJoinedClubs();
   }, []);
 
   const loadJoinedClubs = async () => {
     const profile = await index(userid);
 
-    setJoinedClubs(
-      profile.clubs.split(",").map((club) => club.split("(")[0]) || []
-    );
+    if (profile?.clubs) {
+      setJoinedClubs(
+        profile.clubs.split(",").map((club) => club.split("(")[0]) || []
+      );
+    } else {
+      setJoinedClubs([]);
+    }
   };
 
   const userClubs: Club[] = joinedClubs

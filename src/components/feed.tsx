@@ -170,7 +170,7 @@ const CAMPUS_LOCATIONS = [
 ];
 
 export default function Feed({ club }: { club: Club }) {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
   const [currentUser, setCurrentUser] = useState<{
     id: string;
     name: string;
@@ -178,6 +178,10 @@ export default function Feed({ club }: { club: Club }) {
   }>({ id: userid, name: "", avatar: "" });
 
   const router = useRouter();
+
+  useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
+  }, []);
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());

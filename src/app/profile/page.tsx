@@ -48,7 +48,11 @@ const AVAILABLE_AVATARS = [
 ];
 
 export default function ProfilePage() {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
+
+  useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
+  }, []);
 
   const [profile, setProfile] = useState<Profile>({
     id: "",

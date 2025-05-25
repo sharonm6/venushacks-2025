@@ -50,7 +50,11 @@ export default function MessagesPage() {
   const [agreedB, setAgreedB] = useState(false);
   const [showMeetVerification, setShowMeetVerification] = useState(false);
 
-  const currentUserId = "jZDLVSPOI9A3xQQhwEef"; // This would come from your auth system
+  let currentUserId = "";
+
+  useEffect(() => {
+    currentUserId = localStorage.getItem("userId") || "";
+  }, []);
 
   const loadUserProfile = async (userId: string) => {
     const chatUserProfile = await indexProfiles(userId);

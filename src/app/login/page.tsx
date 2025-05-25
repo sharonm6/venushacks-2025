@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Mail, Lock, Heart, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getDoc, getDocs } from "firebase/firestore";
+import { accountsCollection } from "@/utils/firebase.browser";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -23,11 +25,40 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Add your authentication logic here
-    setTimeout(() => {
-      setIsLoading(false);
-      // Redirect to profile or dashboard
-    }, 2000);
+    await getDocs(accountsCollection)
+      .then((querySnapshot) =>
+        querySnapshot.docs.map(
+          (doc) =>
+            ({ ...doc.data(), id: doc.id } as {
+              email: string;
+              password: string;
+              id: string;
+            })
+        )
+      )
+      .then((querySnapshot) => {
+        const newAccount = querySnapshot.find(
+          (account) => account.email === email && account.password === password
+        );
+        if (!newAccount) {
+          alert(
+            "No account found with that email or password. Please try again!"
+          );
+          setIsLoading(false);
+          return;
+        }
+        return newAccount;
+      })
+      .then((newAccount) => {
+        if (newAccount) {
+          console.log(newAccount);
+          setTimeout(() => {
+            setIsLoading(false);
+            localStorage.setItem("userId", newAccount.id);
+            router.push("/");
+          }, 2000);
+        }
+      });
   };
 
   const handleSignupRedirect = () => {

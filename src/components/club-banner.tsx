@@ -43,7 +43,7 @@ export default function ClubBanner({
   club,
   initialJoinStatus = false,
 }: ClubBannerProps) {
-  const userid = "jZDLVSPOI9A3xQQhwEef";
+  let userid = "pdQPZmjZ3XFKxgjkUq3O";
   const router = useRouter();
   const [isJoined, setIsJoined] = useState(initialJoinStatus);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +52,10 @@ export default function ClubBanner({
   const [bannerExpanded, setBannerExpanded] = useState(true);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    userid = localStorage.getItem("userId") || "";
+  }, []);
 
   const loadJoined = async () => {
     const profile = await indexProfiles(userid);
