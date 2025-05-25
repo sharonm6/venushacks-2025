@@ -3,8 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Heart, MessageCircle, Share, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Heart, MessageCircle, Share, Send, Plus } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Mock comments data
 const mockComments = {
@@ -171,6 +182,7 @@ interface CommentProps {
 type CommentsType = Record<number, Comment[]>;
 
 function Comment({ comment }: CommentProps) {
+  const router = useRouter();
   const [liked, setLiked] = useState(false);
   const [commentLikes, setCommentLikes] = useState(comment.likes);
 
@@ -179,9 +191,16 @@ function Comment({ comment }: CommentProps) {
     setCommentLikes((prev) => (liked ? prev - 1 : prev + 1));
   };
 
+  const handleUserClick = () => {
+    router.push(`/profile/${comment.user.username}`);
+  };
+
   return (
     <div className="flex items-start space-x-3 py-2">
-      <Avatar className="h-8 w-8 ring-1 ring-purple-100">
+      <Avatar
+        className="h-8 w-8 ring-1 ring-purple-100 cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all duration-200"
+        onClick={handleUserClick}
+      >
         <AvatarImage src={comment.user.avatar} alt={comment.user.name} />
         <AvatarFallback className="bg-purple-50 text-purple-600 text-xs">
           {comment.user.name
@@ -194,10 +213,16 @@ function Comment({ comment }: CommentProps) {
       <div className="flex-1 space-y-1">
         <div className="bg-gray-50 rounded-lg px-3 py-2">
           <div className="flex items-center space-x-2 mb-1">
-            <span className="font-medium text-xs text-gray-900">
+            <span
+              className="font-medium text-xs text-gray-900 cursor-pointer hover:text-purple-600 transition-colors duration-200"
+              onClick={handleUserClick}
+            >
               {comment.user.name}
             </span>
-            <span className="text-purple-600 text-xs">
+            <span
+              className="text-purple-600 text-xs cursor-pointer hover:text-purple-800 transition-colors duration-200"
+              onClick={handleUserClick}
+            >
               @{comment.user.username}
             </span>
           </div>
@@ -217,16 +242,19 @@ function Comment({ comment }: CommentProps) {
             <Heart className={`h-3 w-3 ${liked ? "fill-current" : ""}`} />
             <span>{commentLikes}</span>
           </button>
-          <button className="text-xs text-gray-500 hover:text-purple-600 transition-colors">
-            Reply
-          </button>
         </div>
       </div>
     </div>
   );
 }
 
+interface NewPostData {
+  title: string;
+  content: string;
+}
+
 export default function Feed() {
+  const router = useRouter();
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [postLikes, setPostLikes] = useState<Record<number, number>>(
     feedItems.reduce((acc, item) => ({ ...acc, [item.id]: item.likes }), {})
@@ -236,6 +264,13 @@ export default function Feed() {
   );
   const [comments, setComments] = useState<CommentsType>(mockComments);
   const [newComments, setNewComments] = useState<Record<number, string>>({});
+  const [posts, setPosts] = useState(feedItems);
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const [newPost, setNewPost] = useState<NewPostData>({
+    title: "",
+    content: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLike = (postId: number) => {
     const newLikedPosts = new Set(likedPosts);
@@ -297,22 +332,171 @@ export default function Feed() {
     }
   };
 
+  const handleUserClick = (username: string) => {
+    router.push(`/profile/${username}`);
+  };
+
+  const handleCreatePost = async () => {
+    if (!newPost.title.trim() || !newPost.content.trim()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Create new post object
+      const createdPost = {
+        id: Date.now(), // In real app, this would come from the backend
+        user: {
+          name: "Current User", // Replace with actual user data
+          avatar: "https://via.placeholder.com/40",
+          username: "current.user",
+        },
+        title: newPost.title.trim(),
+        content: newPost.content.trim(),
+        timestamp: "Just now",
+        likes: 0,
+        comments: 0,
+      };
+
+      // Add to the beginning of posts array
+      setPosts((prev) => [createdPost, ...prev]);
+
+      // Update post likes state for the new post
+      setPostLikes((prev) => ({ ...prev, [createdPost.id]: 0 }));
+
+      // Reset form and close dialog
+      setNewPost({ title: "", content: "" });
+      setIsCreatePostOpen(false);
+
+      // TODO: In a real app, make API call to create post
+      // await createPost(newPost);
+    } catch (error) {
+      console.error("Error creating post:", error);
+      // TODO: Handle error (show toast, etc.)
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Card className="w-full h-full bg-white/90 backdrop-blur-sm border-2 border-venus-200 shadow-lg flex flex-col">
       <CardHeader className="flex-shrink-0 pb-3">
-        <CardTitle className="text-lg text-purple-700">Club Feed</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg text-purple-700">Club Feed</CardTitle>
+
+          {/* Create Post Button */}
+          <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+            <DialogTrigger asChild>
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Create Post
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-semibold text-purple-700">
+                  Create New Post
+                </DialogTitle>
+                <DialogDescription>
+                  Share something with your club members. What's on your mind?
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Post Title
+                  </label>
+                  <Input
+                    placeholder="Enter a catchy title for your post..."
+                    value={newPost.title}
+                    onChange={(e) =>
+                      setNewPost((prev) => ({ ...prev, title: e.target.value }))
+                    }
+                    className="border-purple-200 focus:border-purple-400 focus:ring-purple-300"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Content
+                  </label>
+                  <Textarea
+                    placeholder="What would you like to share with your club members?"
+                    value={newPost.content}
+                    onChange={(e) =>
+                      setNewPost((prev) => ({
+                        ...prev,
+                        content: e.target.value,
+                      }))
+                    }
+                    className="min-h-[120px] border-purple-200 focus:border-purple-400 focus:ring-purple-300 resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>{newPost.title.length}/100 characters for title</span>
+                  <span>
+                    {newPost.content.length}/500 characters for content
+                  </span>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setNewPost({ title: "", content: "" });
+                    setIsCreatePostOpen(false);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreatePost}
+                  disabled={
+                    !newPost.title.trim() ||
+                    !newPost.content.trim() ||
+                    isSubmitting ||
+                    newPost.title.length > 100 ||
+                    newPost.content.length > 500
+                  }
+                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                      Posting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3 w-3 mr-1" />
+                      Post
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
 
       <CardContent className="flex-1 overflow-hidden p-0">
         <div className="h-full overflow-y-auto px-6 pb-6 space-y-4">
-          {feedItems.map((item) => (
+          {posts.map((item) => (
             <Card
               key={item.id}
               className="border border-purple-100 hover:shadow-md transition-all duration-200 hover:border-purple-200"
             >
               <CardContent className="p-4">
                 <div className="flex items-start space-x-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-purple-100">
+                  <Avatar
+                    className="h-10 w-10 ring-2 ring-purple-100 cursor-pointer hover:ring-purple-300 transition-all duration-200"
+                    onClick={() => handleUserClick(item.user.username)}
+                  >
                     <AvatarImage src={item.user.avatar} alt={item.user.name} />
                     <AvatarFallback className="bg-purple-100 text-purple-700 text-xs font-medium">
                       {item.user.name
@@ -325,10 +509,16 @@ export default function Feed() {
                   <div className="flex-1 space-y-2 min-w-0">
                     {/* User info and timestamp */}
                     <div className="flex items-center space-x-2 flex-wrap">
-                      <h4 className="font-semibold text-sm text-gray-900">
+                      <h4
+                        className="font-semibold text-sm text-gray-900 cursor-pointer hover:text-purple-600 transition-colors duration-200"
+                        onClick={() => handleUserClick(item.user.username)}
+                      >
                         {item.user.name}
                       </h4>
-                      <span className="text-purple-600 text-xs">
+                      <span
+                        className="text-purple-600 text-xs cursor-pointer hover:text-purple-800 transition-colors duration-200"
+                        onClick={() => handleUserClick(item.user.username)}
+                      >
                         @{item.user.username}
                       </span>
                       <span className="text-gray-400 text-xs">•</span>

@@ -1,8 +1,8 @@
 "use client";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
-import { Heart, Star, Users, Trophy, MapPin, MoveRight } from "lucide-react";
+import { Heart, Star, Users, Trophy, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Club {
   id: number;
@@ -14,6 +14,7 @@ interface Club {
 }
 
 export default function ClubPostcard() {
+  const router = useRouter();
   // Sample data for each club: Must be taken from DB
   // Only take top 3 clubs for the postcard
   const clubs: Club[] = [
@@ -59,9 +60,6 @@ export default function ClubPostcard() {
           </div>
           <div className="absolute top-8 right-12 opacity-20 group-hover/card:opacity-40 transition-opacity duration-300 pointer-events-none">
             <Heart className="w-4 h-4 text-pink-400 fill-current" />
-          </div>
-          <div className="absolute bottom-4 left-4 opacity-25 group-hover/card:opacity-50 transition-opacity duration-300 pointer-events-none">
-            <MapPin className="w-5 h-5 text-blue-400" />
           </div>
 
           {/* Postcard Header */}
@@ -153,12 +151,15 @@ export default function ClubPostcard() {
           </CardItem>
 
           {/* Bottom decoration */}
-          <CardItem
-            translateZ={20}
-            className="absolute bottom-4 right-4 text-xs text-purple-400 dark:text-purple-300 font-medium opacity-60 pointer-events-none"
-          >
+          <CardItem translateZ={20} className="text-center mt-8 w-full">
             {/* View all club buttons */}
-            <Button>
+            <Button
+              onClick={() => router.push("/all-clubs")}
+              onMouseMove={(e) => e.stopPropagation()}
+              onMouseEnter={(e) => e.stopPropagation()}
+              onMouseLeave={(e) => e.stopPropagation()}
+              className="hover:scale-105 transition-transform duration-200"
+            >
               View all clubs!
               <MoveRight></MoveRight>
             </Button>
