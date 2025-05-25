@@ -12,7 +12,9 @@ export default function ClubPage() {
   const clubId = params.id as string;
   const [club, setClub] = useState<Club | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialJoined, setInitialJoined] = useState<boolean | null>(null);
+  const [initialJoined, setInitialJoined] = useState<boolean | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     userid = localStorage.getItem("userId") || "";
