@@ -1,8 +1,12 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
+import { index as indexPosts } from "@/services/posts";
+import { index as indexProfile } from "@/services/profiles";
+import { Post, FeedItem } from "@/lib/types";
+import { type Club } from "@/lib/clubDatabase";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -14,161 +18,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Heart, MessageCircle, Share, Send, Plus } from "lucide-react";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-// Mock comments data
-const mockComments = {
-  1: [
-    {
-      id: 1,
-      user: {
-        name: "Mike Johnson",
-        avatar: "https://via.placeholder.com/32",
-        username: "mike.j",
-      },
-      content:
-        "This sounds amazing! Can't wait to participate. When will registration open?",
-      timestamp: "1 hour ago",
-      likes: 3,
-    },
-    {
-      id: 2,
-      user: {
-        name: "Lisa Wang",
-        avatar: "https://via.placeholder.com/32",
-        username: "lisa.w",
-      },
-      content:
-        "Looking forward to this! Will there be prizes for different categories?",
-      timestamp: "45 minutes ago",
-      likes: 2,
-    },
-  ],
-  2: [
-    {
-      id: 3,
-      user: {
-        name: "Carlos Rodriguez",
-        avatar: "https://via.placeholder.com/32",
-        username: "carlos.r",
-      },
-      content:
-        "Perfect timing! I've been wanting to learn ML. Will materials be provided?",
-      timestamp: "3 hours ago",
-      likes: 5,
-    },
-  ],
-  3: [
-    {
-      id: 4,
-      user: {
-        name: "Anna Kim",
-        avatar: "https://via.placeholder.com/32",
-        username: "anna.k",
-      },
-      content:
-        "I'm interested! What topics will you be covering in the study sessions?",
-      timestamp: "6 hours ago",
-      likes: 1,
-    },
-  ],
-};
-
-// Mock feed data
-const feedItems = [
-  {
-    id: 1,
-    user: {
-      name: "Sarah Chen",
-      avatar: "https://via.placeholder.com/40",
-      username: "sarah.chen",
-    },
-    title: "Excited to announce our upcoming hackathon!",
-    content:
-      "Join us for 48 hours of coding, innovation, and fun. Registration opens next week! This will be our biggest event yet with amazing prizes and mentors from top tech companies.",
-    timestamp: "2 hours ago",
-    likes: 24,
-    comments: 8,
-  },
-  {
-    id: 2,
-    user: {
-      name: "Emily Rodriguez",
-      avatar: "https://via.placeholder.com/40",
-      username: "emily.r",
-    },
-    title: "Workshop: Introduction to Machine Learning",
-    content:
-      "Don't miss our ML workshop this Friday at 6 PM in the CS building. We'll cover the basics of neural networks and hands-on coding with Python.",
-    timestamp: "5 hours ago",
-    likes: 18,
-    comments: 12,
-  },
-  {
-    id: 3,
-    user: {
-      name: "Jessica Kim",
-      avatar: "https://via.placeholder.com/40",
-      username: "jess.kim",
-    },
-    title: "Study group forming for algorithms class",
-    content:
-      "Looking for motivated students to join our weekly study sessions. We meet every Tuesday at 7 PM in the library.",
-    timestamp: "1 day ago",
-    likes: 15,
-    comments: 6,
-  },
-  {
-    id: 4,
-    user: {
-      name: "Alex Johnson",
-      avatar: "https://via.placeholder.com/40",
-      username: "alex.j",
-    },
-    title: "Great networking event last night!",
-    content:
-      "Thanks to everyone who attended our industry networking mixer. Amazing connections were made and we can't wait for the next one!",
-    timestamp: "2 days ago",
-    likes: 32,
-    comments: 15,
-  },
-  {
-    id: 5,
-    user: {
-      name: "Maya Patel",
-      avatar: "https://via.placeholder.com/40",
-      username: "maya.p",
-    },
-    title: "New member orientation this weekend",
-    content:
-      "Welcome all new members! Join us Saturday at 10 AM for orientation and team building activities. Lunch will be provided.",
-    timestamp: "3 days ago",
-    likes: 21,
-    comments: 9,
-  },
-  {
-    id: 6,
-    user: {
-      name: "David Wilson",
-      avatar: "https://via.placeholder.com/40",
-      username: "david.w",
-    },
-    title: "Project showcase submissions due soon",
-    content:
-      "Reminder: All project showcase submissions are due this Friday. Don't forget to include your demo video and project documentation.",
-    timestamp: "4 days ago",
-    likes: 28,
-    comments: 7,
-  },
-];
+import { doc, updateDoc } from "firebase/firestore";
+import { postsCollection } from "@/utils/firebase.browser";
 
 interface Comment {
-  id: number;
+  id: string;
   user: {
+    id: string;
     name: string;
     avatar: string;
-    username: string;
   };
   content: string;
   timestamp: string;
@@ -179,7 +38,7 @@ interface CommentProps {
   comment: Comment;
 }
 
-type CommentsType = Record<number, Comment[]>;
+type CommentsType = Record<string, Comment[]>;
 
 function Comment({ comment }: CommentProps) {
   const router = useRouter();
@@ -192,7 +51,7 @@ function Comment({ comment }: CommentProps) {
   };
 
   const handleUserClick = () => {
-    router.push(`/profile/${comment.user.username}`);
+    router.push(`/profile/${comment.user.id}`);
   };
 
   return (
@@ -218,12 +77,6 @@ function Comment({ comment }: CommentProps) {
               onClick={handleUserClick}
             >
               {comment.user.name}
-            </span>
-            <span
-              className="text-purple-600 text-xs cursor-pointer hover:text-purple-800 transition-colors duration-200"
-              onClick={handleUserClick}
-            >
-              @{comment.user.username}
             </span>
           </div>
           <p className="text-sm text-gray-700 leading-relaxed">
@@ -253,24 +106,159 @@ interface NewPostData {
   content: string;
 }
 
-export default function Feed() {
+export default function Feed({ club }: { club: Club }) {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    name: string;
+    avatar: string;
+  }>({ id: userid, name: "", avatar: "" });
+
   const router = useRouter();
+
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
-  const [postLikes, setPostLikes] = useState<Record<number, number>>(
-    feedItems.reduce((acc, item) => ({ ...acc, [item.id]: item.likes }), {})
-  );
-  const [expandedComments, setExpandedComments] = useState<Set<number>>(
+  const [postLikes, setPostLikes] = useState<Record<string, number>>({});
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(
     new Set()
   );
-  const [comments, setComments] = useState<CommentsType>(mockComments);
-  const [newComments, setNewComments] = useState<Record<number, string>>({});
-  const [posts, setPosts] = useState(feedItems);
+  const [comments, setComments] = useState<CommentsType>([]);
+  const [newComments, setNewComments] = useState<Record<string, string>>({});
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [newPost, setNewPost] = useState<NewPostData>({
     title: "",
     content: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getUserInfo = async (posterid: string) => {
+    const profile = await indexProfile(posterid);
+
+    return {
+      id: posterid,
+      name: profile ? profile.name : "Hidden User",
+      avatar: profile ? profile.picture : "/avatar0.png",
+    };
+  };
+
+  const loadUserInfo = async () => {
+    const currentUser = await getUserInfo(userid);
+    setCurrentUser(currentUser);
+  };
+
+  useEffect(() => {
+    loadUserInfo();
+    loadFeed();
+  }, []);
+
+  function formatTimestamp(timestamp: {
+    seconds: number;
+    nanoseconds: number;
+  }): string {
+    const now = Date.now();
+    const postTime = timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000;
+    const diffInMs = now - postTime;
+
+    const minutes = Math.floor(diffInMs / (1000 * 60));
+    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+    } else if (hours < 24) {
+      return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+    } else {
+      return `${days} day${days !== 1 ? "s" : ""} ago`;
+    }
+  }
+
+  const parseComments = (posts: Post[]) => {
+    const parsedComments: CommentsType = {};
+    posts.forEach(async (post) => {
+      if (post.comments) {
+        const commentStrings = post.comments.split(";");
+
+        parsedComments[post.id] = await Promise.all(
+          commentStrings.map(async (commentStr, index) => {
+            const match = commentStr.match(/^(.+)\(([^,]+),([^,]+),(\d+)\)$/);
+            if (match) {
+              const [, content, userid, timestamp, numlikes] = match;
+              const commenterInfo = await getUserInfo(userid);
+
+              return {
+                id: timestamp.toString(),
+                user: {
+                  id: userid,
+                  name: commenterInfo.name || "Hidden user",
+                  avatar: commenterInfo.avatar || "/avatar0.png",
+                },
+                content: content.trim(),
+                timestamp: formatTimestamp({
+                  seconds: parseInt(new Date(timestamp).getTime() / 1000 + ""),
+                  nanoseconds: 0,
+                }),
+                likes: parseInt(numlikes),
+              };
+            }
+            return {
+              id: index + 1,
+              user: {
+                id: "unknown",
+                name: "User",
+                avatar: "/avatar0.png",
+              },
+              content: commentStr,
+              timestamp: "1 hour ago",
+              likes: 0,
+            };
+          })
+        );
+      }
+    });
+    return parsedComments;
+  };
+
+  const loadFeed = async () => {
+    const posts = await indexPosts(club.id);
+
+    const feedItems: FeedItem[] = await Promise.all(
+      posts.map(async (post: Post) => ({
+        id: post.id,
+        user: (await getUserInfo(post.posterid)) || {
+          id: post.posterid,
+          name: "Hidden User",
+          avatar: "/avatar0.png",
+        },
+        title: post.title,
+        content: post.content,
+        timestamp: formatTimestamp(post.timestamp),
+        likes: post.likes ? post.likes.split(",").length : 0,
+        comments: post.comments ? post.comments.split(";").length : 0,
+        commentsString: post.comments || "",
+      }))
+    );
+
+    setPostLikes(
+      feedItems.reduce((acc, item) => {
+        acc[item.id] = item.likes;
+        return acc;
+      }, {} as Record<string, number>)
+    );
+
+    const parsedComments = parseComments(posts);
+    setComments(parsedComments);
+
+    setPostLikes(
+      feedItems.reduce((acc, item) => {
+        acc[item.id] = item.likes;
+        return acc;
+      }, {} as Record<string, number>)
+    );
+
+    setFeedItems(feedItems);
+
+    console.log("Feed items loaded:", feedItems);
+  };
 
   const handleLike = (postId: number) => {
     const newLikedPosts = new Set(likedPosts);
@@ -287,7 +275,7 @@ export default function Feed() {
     setLikedPosts(newLikedPosts);
   };
 
-  const toggleComments = (postId: number) => {
+  const toggleComments = (postId: string) => {
     const newExpanded = new Set(expandedComments);
     if (expandedComments.has(postId)) {
       newExpanded.delete(postId);
@@ -297,35 +285,61 @@ export default function Feed() {
     setExpandedComments(newExpanded);
   };
 
-  const handleCommentChange = (postId: number, value: string) => {
+  const handleCommentChange = (postId: string, value: string) => {
     setNewComments((prev) => ({ ...prev, [postId]: value }));
   };
 
-  const submitComment = (postId: number) => {
-    const commentText = newComments[postId]?.trim();
-    if (!commentText) return;
+  const submitComment = async (postId: string) => {
+    const commentText = newComments[postId] || "";
+    if (!commentText.trim()) return;
 
-    const newComment = {
-      id: Date.now(),
-      user: {
-        name: "Current User",
-        avatar: "https://via.placeholder.com/32",
-        username: "current.user",
-      },
-      content: commentText,
-      timestamp: "Just now",
-      likes: 0,
-    };
+    try {
+      const postRef = doc(postsCollection, postId || "");
 
-    setComments((prev) => ({
-      ...prev,
-      [postId]: [...(prev[postId] || []), newComment],
-    }));
+      const currentTimestamp = new Date().toISOString();
 
-    setNewComments((prev) => ({ ...prev, [postId]: "" }));
+      const newCommentString = `${commentText.trim()}(${
+        currentUser.id
+      },${currentTimestamp},0)`;
+
+      const currentPost = feedItems.find((item) => item.id === postId);
+      const existingComments = currentPost?.commentsString || "";
+
+      const updatedComments = existingComments
+        ? `${existingComments};${newCommentString}`
+        : newCommentString;
+
+      await updateDoc(postRef, {
+        comments: updatedComments,
+      });
+
+      const newComment = {
+        id: Date.now().toString(),
+        user: {
+          id: currentUser.id || "currentUser",
+          name: currentUser.name || "Hidden user",
+          avatar: currentUser.avatar || "/avatar0.png",
+        },
+        content: commentText.trim(),
+        timestamp: formatTimestamp({
+          seconds: Math.floor(Date.now() / 1000),
+          nanoseconds: 0,
+        }),
+        likes: 0,
+      };
+
+      setComments((prev) => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), newComment],
+      }));
+
+      setNewComments((prev) => ({ ...prev, [postId]: "" }));
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+    }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent, postId: number) => {
+  const handleKeyPress = (e: React.KeyboardEvent, postId: string) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       submitComment(postId);
@@ -367,7 +381,7 @@ export default function Feed() {
       setNewPost({ title: "", content: "" });
       setIsCreatePostOpen(false);
 
-      // TODO: In a real app, make API call to create post
+      // TODO: make API call to create post
       // await createPost(newPost);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -486,7 +500,7 @@ export default function Feed() {
 
       <CardContent className="flex-1 overflow-hidden p-0">
         <div className="h-full overflow-y-auto px-6 pb-6 space-y-4">
-          {posts.map((item) => (
+          {feedItems.map((item) => (
             <Card
               key={item.id}
               className="border border-purple-100 hover:shadow-md transition-all duration-200 hover:border-purple-200"
@@ -495,7 +509,7 @@ export default function Feed() {
                 <div className="flex items-start space-x-3">
                   <Avatar
                     className="h-10 w-10 ring-2 ring-purple-100 cursor-pointer hover:ring-purple-300 transition-all duration-200"
-                    onClick={() => handleUserClick(item.user.username)}
+                    onClick={() => handleUserClick(item.user.id)}
                   >
                     <AvatarImage src={item.user.avatar} alt={item.user.name} />
                     <AvatarFallback className="bg-purple-100 text-purple-700 text-xs font-medium">
@@ -515,12 +529,6 @@ export default function Feed() {
                       >
                         {item.user.name}
                       </h4>
-                      <span
-                        className="text-purple-600 text-xs cursor-pointer hover:text-purple-800 transition-colors duration-200"
-                        onClick={() => handleUserClick(item.user.username)}
-                      >
-                        @{item.user.username}
-                      </span>
                       <span className="text-gray-400 text-xs">•</span>
                       <span className="text-gray-500 text-xs">
                         {item.timestamp}
@@ -598,6 +606,10 @@ export default function Feed() {
                         {/* Add Comment */}
                         <div className="flex items-start space-x-3 pt-2">
                           <Avatar className="h-8 w-8 ring-1 ring-purple-100">
+                            <AvatarImage
+                              src={currentUser.avatar || "/avatar0.png"}
+                              alt="Current User"
+                            />
                             <AvatarFallback className="bg-purple-100 text-purple-600 text-xs">
                               CU
                             </AvatarFallback>

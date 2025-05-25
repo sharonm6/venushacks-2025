@@ -387,7 +387,7 @@ export default function ClubBanner({
           }`}
           data-feed
         >
-          <Feed />
+          <Feed club={club} />
         </div>
       </section>
     </div>

@@ -36,18 +36,6 @@ import { profilesCollection } from "@/utils/firebase.browser";
 import { doc, updateDoc } from "firebase/firestore";
 import { clubsData } from "@/lib/clubDatabase";
 
-// interface UserProfile {
-//   id: string;
-//   picture: string;
-//   name: string;
-//   pronouns: string;
-//   year: string;
-//   major: string;
-//   bio: string;
-//   isHidden: boolean;
-//   joinedClubs: JoinedClub[];
-// }
-
 const AVAILABLE_AVATARS = [
   "/avatar0.png",
   "/avatar1.png",
