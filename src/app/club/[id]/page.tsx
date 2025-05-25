@@ -129,12 +129,13 @@ export default function ClubPage() {
           ease: "easeOut",
           staggerChildren: 0.1,
         }}
-        className="mx-auto flex w-full flex-col space-y-8 bg-venus-light min-h-screen"
+        className="h-screen flex flex-col bg-venus-light overflow-hidden"
       >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+          className="flex-1 min-h-0"
         >
           <ClubBanner club={club} initialJoinStatus={initialJoined} />
         </motion.div>
