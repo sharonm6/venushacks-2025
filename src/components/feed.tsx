@@ -19,156 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { Heart, MessageCircle, Share, Send, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-// Mock comments data
-const mockComments = {
-  1: [
-    {
-      id: 1,
-      user: {
-        name: "Mike Johnson",
-        avatar: "https://via.placeholder.com/32",
-        username: "mike.j",
-      },
-      content:
-        "This sounds amazing! Can't wait to participate. When will registration open?",
-      timestamp: "1 hour ago",
-      likes: 3,
-    },
-    {
-      id: 2,
-      user: {
-        name: "Lisa Wang",
-        avatar: "https://via.placeholder.com/32",
-        username: "lisa.w",
-      },
-      content:
-        "Looking forward to this! Will there be prizes for different categories?",
-      timestamp: "45 minutes ago",
-      likes: 2,
-    },
-  ],
-  2: [
-    {
-      id: 3,
-      user: {
-        name: "Carlos Rodriguez",
-        avatar: "https://via.placeholder.com/32",
-        username: "carlos.r",
-      },
-      content:
-        "Perfect timing! I've been wanting to learn ML. Will materials be provided?",
-      timestamp: "3 hours ago",
-      likes: 5,
-    },
-  ],
-  3: [
-    {
-      id: 4,
-      user: {
-        name: "Anna Kim",
-        avatar: "https://via.placeholder.com/32",
-        username: "anna.k",
-      },
-      content:
-        "I'm interested! What topics will you be covering in the study sessions?",
-      timestamp: "6 hours ago",
-      likes: 1,
-    },
-  ],
-};
-
-// Mock feed data
-const feedItems = [
-  {
-    id: 1,
-    user: {
-      name: "Sarah Chen",
-      avatar: "https://via.placeholder.com/40",
-      username: "sarah.chen",
-    },
-    title: "Excited to announce our upcoming hackathon!",
-    content:
-      "Join us for 48 hours of coding, innovation, and fun. Registration opens next week! This will be our biggest event yet with amazing prizes and mentors from top tech companies.",
-    timestamp: "2 hours ago",
-    likes: 24,
-    comments: 8,
-  },
-  {
-    id: 2,
-    user: {
-      name: "Emily Rodriguez",
-      avatar: "https://via.placeholder.com/40",
-      username: "emily.r",
-    },
-    title: "Workshop: Introduction to Machine Learning",
-    content:
-      "Don't miss our ML workshop this Friday at 6 PM in the CS building. We'll cover the basics of neural networks and hands-on coding with Python.",
-    timestamp: "5 hours ago",
-    likes: 18,
-    comments: 12,
-  },
-  {
-    id: 3,
-    user: {
-      name: "Jessica Kim",
-      avatar: "https://via.placeholder.com/40",
-      username: "jess.kim",
-    },
-    title: "Study group forming for algorithms class",
-    content:
-      "Looking for motivated students to join our weekly study sessions. We meet every Tuesday at 7 PM in the library.",
-    timestamp: "1 day ago",
-    likes: 15,
-    comments: 6,
-  },
-  {
-    id: 4,
-    user: {
-      name: "Alex Johnson",
-      avatar: "https://via.placeholder.com/40",
-      username: "alex.j",
-    },
-    title: "Great networking event last night!",
-    content:
-      "Thanks to everyone who attended our industry networking mixer. Amazing connections were made and we can't wait for the next one!",
-    timestamp: "2 days ago",
-    likes: 32,
-    comments: 15,
-  },
-  {
-    id: 5,
-    user: {
-      name: "Maya Patel",
-      avatar: "https://via.placeholder.com/40",
-      username: "maya.p",
-    },
-    title: "New member orientation this weekend",
-    content:
-      "Welcome all new members! Join us Saturday at 10 AM for orientation and team building activities. Lunch will be provided.",
-    timestamp: "3 days ago",
-    likes: 21,
-    comments: 9,
-  },
-  {
-    id: 6,
-    user: {
-      name: "David Wilson",
-      avatar: "https://via.placeholder.com/40",
-      username: "david.w",
-    },
-    title: "Project showcase submissions due soon",
-    content:
-      "Reminder: All project showcase submissions are due this Friday. Don't forget to include your demo video and project documentation.",
-    timestamp: "4 days ago",
-    likes: 28,
-    comments: 7,
-  },
-];
+import { doc, updateDoc } from "firebase/firestore";
+import { postsCollection } from "@/utils/firebase.browser";
 
 interface Comment {
-  id: number;
+  id: string;
   user: {
+    id: string;
     name: string;
     avatar: string;
   };
@@ -194,7 +51,7 @@ function Comment({ comment }: CommentProps) {
   };
 
   const handleUserClick = () => {
-    router.push(`/profile/${comment.user.username}`);
+    router.push(`/profile/${comment.user.id}`);
   };
 
   return (
@@ -252,21 +109,21 @@ interface NewPostData {
 export default function Feed({ club }: { club: Club }) {
   const userid = "jZDLVSPOI9A3xQQhwEef";
   const [currentUser, setCurrentUser] = useState<{
+    id: string;
     name: string;
     avatar: string;
-  }>({ name: "", avatar: "" });
+  }>({ id: userid, name: "", avatar: "" });
 
   const router = useRouter();
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [postLikes, setPostLikes] = useState<Record<string, number>>({});
-  const [expandedComments, setExpandedComments] = useState<Set<number>>(
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(
     new Set()
   );
   const [comments, setComments] = useState<CommentsType>([]);
-  const [newComments, setNewComments] = useState<Record<number, string>>({});
-  const [posts, setPosts] = useState(feedItems);
+  const [newComments, setNewComments] = useState<Record<string, string>>({});
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [newPost, setNewPost] = useState<NewPostData>({
     title: "",
@@ -278,6 +135,7 @@ export default function Feed({ club }: { club: Club }) {
     const profile = await indexProfile(posterid);
 
     return {
+      id: posterid,
       name: profile ? profile.name : "Hidden User",
       avatar: profile ? profile.picture : "/avatar0.png",
     };
@@ -319,6 +177,7 @@ export default function Feed({ club }: { club: Club }) {
     posts.forEach(async (post) => {
       if (post.comments) {
         const commentStrings = post.comments.split(";");
+
         parsedComments[post.id] = await Promise.all(
           commentStrings.map(async (commentStr, index) => {
             const match = commentStr.match(/^(.+)\(([^,]+),([^,]+),(\d+)\)$/);
@@ -327,8 +186,9 @@ export default function Feed({ club }: { club: Club }) {
               const commenterInfo = await getUserInfo(userid);
 
               return {
-                id: index + 1,
+                id: timestamp.toString(),
                 user: {
+                  id: userid,
                   name: commenterInfo.name || "Hidden user",
                   avatar: commenterInfo.avatar || "/avatar0.png",
                 },
@@ -343,9 +203,9 @@ export default function Feed({ club }: { club: Club }) {
             return {
               id: index + 1,
               user: {
+                id: "unknown",
                 name: "User",
                 avatar: "/avatar0.png",
-                username: "user",
               },
               content: commentStr,
               timestamp: "1 hour ago",
@@ -362,9 +222,10 @@ export default function Feed({ club }: { club: Club }) {
     const posts = await indexPosts(club.id);
 
     const feedItems: FeedItem[] = await Promise.all(
-      posts.map(async (post) => ({
+      posts.map(async (post: Post) => ({
         id: post.id,
         user: (await getUserInfo(post.posterid)) || {
+          id: post.posterid,
           name: "Hidden User",
           avatar: "/avatar0.png",
         },
@@ -373,6 +234,7 @@ export default function Feed({ club }: { club: Club }) {
         timestamp: formatTimestamp(post.timestamp),
         likes: post.likes ? post.likes.split(",").length : 0,
         comments: post.comments ? post.comments.split(";").length : 0,
+        commentsString: post.comments || "",
       }))
     );
 
@@ -413,7 +275,7 @@ export default function Feed({ club }: { club: Club }) {
     setLikedPosts(newLikedPosts);
   };
 
-  const toggleComments = (postId: number) => {
+  const toggleComments = (postId: string) => {
     const newExpanded = new Set(expandedComments);
     if (expandedComments.has(postId)) {
       newExpanded.delete(postId);
@@ -423,35 +285,61 @@ export default function Feed({ club }: { club: Club }) {
     setExpandedComments(newExpanded);
   };
 
-  const handleCommentChange = (postId: number, value: string) => {
+  const handleCommentChange = (postId: string, value: string) => {
     setNewComments((prev) => ({ ...prev, [postId]: value }));
   };
 
-  const submitComment = (postId: number) => {
-    const commentText = newComments[postId]?.trim();
-    if (!commentText) return;
+  const submitComment = async (postId: string) => {
+    const commentText = newComments[postId] || "";
+    if (!commentText.trim()) return;
 
-    const newComment = {
-      id: Date.now(),
-      user: {
-        name: "Current User",
-        avatar: "https://via.placeholder.com/32",
-        username: "current.user",
-      },
-      content: commentText,
-      timestamp: "Just now",
-      likes: 0,
-    };
+    try {
+      const postRef = doc(postsCollection, postId || "");
 
-    setComments((prev) => ({
-      ...prev,
-      [postId]: [...(prev[postId] || []), newComment],
-    }));
+      const currentTimestamp = new Date().toISOString();
 
-    setNewComments((prev) => ({ ...prev, [postId]: "" }));
+      const newCommentString = `${commentText.trim()}(${
+        currentUser.id
+      },${currentTimestamp},0)`;
+
+      const currentPost = feedItems.find((item) => item.id === postId);
+      const existingComments = currentPost?.commentsString || "";
+
+      const updatedComments = existingComments
+        ? `${existingComments};${newCommentString}`
+        : newCommentString;
+
+      await updateDoc(postRef, {
+        comments: updatedComments,
+      });
+
+      const newComment = {
+        id: Date.now().toString(),
+        user: {
+          id: currentUser.id || "currentUser",
+          name: currentUser.name || "Hidden user",
+          avatar: currentUser.avatar || "/avatar0.png",
+        },
+        content: commentText.trim(),
+        timestamp: formatTimestamp({
+          seconds: Math.floor(Date.now() / 1000),
+          nanoseconds: 0,
+        }),
+        likes: 0,
+      };
+
+      setComments((prev) => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), newComment],
+      }));
+
+      setNewComments((prev) => ({ ...prev, [postId]: "" }));
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+    }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent, postId: number) => {
+  const handleKeyPress = (e: React.KeyboardEvent, postId: string) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       submitComment(postId);
@@ -493,7 +381,7 @@ export default function Feed({ club }: { club: Club }) {
       setNewPost({ title: "", content: "" });
       setIsCreatePostOpen(false);
 
-      // TODO: In a real app, make API call to create post
+      // TODO: make API call to create post
       // await createPost(newPost);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -621,7 +509,7 @@ export default function Feed({ club }: { club: Club }) {
                 <div className="flex items-start space-x-3">
                   <Avatar
                     className="h-10 w-10 ring-2 ring-purple-100 cursor-pointer hover:ring-purple-300 transition-all duration-200"
-                    onClick={() => handleUserClick(item.user.username)}
+                    onClick={() => handleUserClick(item.user.id)}
                   >
                     <AvatarImage src={item.user.avatar} alt={item.user.name} />
                     <AvatarFallback className="bg-purple-100 text-purple-700 text-xs font-medium">

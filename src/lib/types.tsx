@@ -69,6 +69,7 @@ export interface Post {
 export interface FeedItem {
   id: string;
   user: {
+    id: string;
     name: string;
     avatar: string;
   };
@@ -77,4 +78,5 @@ export interface FeedItem {
   timestamp: string;
   likes: number;
   comments: number;
+  commentsString: string;
 }
