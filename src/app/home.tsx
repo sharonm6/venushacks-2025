@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AvatarWithSpeechBubble from "@/components/avatar-speech-bubble";
 import LoadingAnimation from "@/components/loader/loadingAnimation";
+import { addDoc } from "firebase/firestore";
+import { matchesCollection } from "@/utils/firebase.browser";
+import { index } from "@/services/matches";
 
 export default function Home() {
   const [userId, setUserId] = useState<string | null>("");
@@ -33,7 +36,7 @@ export default function Home() {
     });
   }, []);
 
-  const handleMailboxClick = () => {
+  const handleMailboxClick = async () => {
     if (userId) {
       // Start navigation sequence
       setIsNavigating(true);
@@ -48,6 +51,13 @@ export default function Home() {
       setTimeout(() => {
         setFadeOut(true);
       }, 3000); // Start fade after 3 seconds
+
+      const userid = localStorage.getItem("userId") || "";
+
+      await addDoc(matchesCollection, {
+        userid: userid,
+        matches: "wics,hack,icssc",
+      });
 
       // Navigate to matches after fade completes
       setTimeout(() => {
@@ -125,12 +135,26 @@ export default function Home() {
   );
 }
 
-function fetchUserMailStatus(): Promise<"loading" | "empty" | "received"> {
-  // Simulate fetching mail status from a database
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Force "received" for testing the avatar
-      resolve("received");
-    }, 1000);
-  });
+const getMatchesExist = async (userid: string): Promise<boolean> => {
+  const matches = await index(userid);
+
+  return matches?.matches != "";
+};
+
+async function fetchUserMailStatus(): Promise<
+  "loading" | "empty" | "received"
+> {
+  const userid = localStorage.getItem("userId");
+  await getMatchesExist(userid || "")
+    .then((matchesExist) => {
+      if (!matchesExist) {
+        return Promise.resolve("empty");
+      } else {
+        return Promise.resolve("received");
+      }
+    })
+    .catch(() => {
+      return Promise.resolve("loading");
+    });
+  return Promise.resolve("empty");
 }

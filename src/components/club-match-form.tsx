@@ -211,14 +211,7 @@ export default function ClubMatchingSurvey() {
   const handleSubmit = async () => {
     console.log("Survey completed:", answers);
 
-    const userid = localStorage.getItem("userId") || "";
-
-    await addDoc(matchesCollection, {
-      userid: userid,
-      matches: "wics,hack,icssc",
-    });
-
-    window.location.href = "/matches";
+    window.location.href = "/";
   };
 
   if (isComplete) {
