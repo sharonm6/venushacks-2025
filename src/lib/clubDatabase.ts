@@ -7,6 +7,7 @@ export interface Club {
   description: string;
   shortDescription: string;
   website: string;
+  logo: string; // New field for logo path
   socialLinks: {
     linktree?: string;
     website?: string;
@@ -53,6 +54,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Advancing computing as a science and profession through competitions and project support.",
     website: "https://www.acm-uci.org/",
+    logo: "/acm_logo.png", // Path to logo in public folder
     socialLinks: {
       linktree: "https://linktr.ee/acmuci",
     },
@@ -91,6 +93,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Introducing students to AI tools and concepts through practical workshops.",
     website: "https://aiclub.ics.uci.edu/",
+    logo: "/ai_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/aiatuci",
     },
@@ -133,6 +136,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Empowering minority voices in tech through networking and professional development.",
     website: "https://bit.ics.uci.edu/",
+    logo: "/bit_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/BIT_UCI",
     },
@@ -171,6 +175,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Building a blockchain ecosystem through education, development, and networking.",
     website: "https://www.blockchainuci.org/",
+    logo: "/blockchain_logo.png",
     socialLinks: {
       website: "https://www.blockchainuci.org/",
     },
@@ -214,6 +219,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Developing technology for social good through nonprofit partnerships.",
     website: "https://ctc-uci.com/",
+    logo: "/ctc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/ctc.uci",
     },
@@ -252,6 +258,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Building a cybersecurity community for all experience levels.",
     website: "https://cyberuci.com/",
+    logo: "/cyber_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/cyberuci",
     },
@@ -291,6 +298,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Nurturing a data science community through workshops and professional development.",
     website: "https://www.dataatuci.com/",
+    logo: "/data_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/DataAtUCIrvine",
     },
@@ -329,6 +337,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "A community for digital designers focused on UX/UI, product, and visual design.",
     website: "https://linktr.ee/designatuci",
+    logo: "/design_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/designatuci",
     },
@@ -367,6 +376,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Organizing hackathons and tech events to promote innovation and learning.",
     website: "https://hack.ics.uci.edu/",
+    logo: "/hack_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/HackAtUCI",
     },
@@ -406,6 +416,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Official student government representing ICS students and improving their academic and professional experience.",
     website: "https://studentcouncil.ics.uci.edu/",
+    logo: "/icssc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/icssc.uci",
     },
@@ -445,6 +456,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Exploring quantum computing through education, research, and interdisciplinary collaboration.",
     website: "https://www.qc-uci.club/",
+    logo: "/qc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/qcatuci",
     },
@@ -483,6 +495,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Supporting game developers through projects, workshops, and industry connections.",
     website: "https://sites.google.com/uci.edu/vgdcuci/home",
+    logo: "/vgdc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/vgdc.uci",
     },
@@ -528,6 +541,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Encouraging women in computer science through mentorship, networking, and professional development.",
     website: "https://wics.ics.uci.edu/",
+    logo: "/wics_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/wicsuci",
     },

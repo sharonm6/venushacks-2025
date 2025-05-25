@@ -56,16 +56,9 @@ export default function ClubBanner({
     }
   }, [club, activitiesExpanded, skillsExpanded]);
 
-  // Helper function to get club image
-  const getClubImage = (clubId: string): string => {
-    const imageMap: Record<string, string> = {
-      wics: "https://via.placeholder.com/150?text=WICS",
-      "hack-uci": "https://via.placeholder.com/150?text=HACK",
-      icssc: "https://via.placeholder.com/150?text=ICSSC",
-      "blockchain-uci": "https://via.placeholder.com/150?text=BLOCKCHAIN",
-      // Add more club images as needed
-    };
-    return imageMap[clubId] || "https://via.placeholder.com/150";
+  // Helper function to get club image - now uses the logo field
+  const getClubImage = (club: Club): string => {
+    return club.logo || "https://via.placeholder.com/150"; // Fallback if logo is missing
   };
 
   // Helper function to extract social links from club data
@@ -148,7 +141,7 @@ export default function ClubBanner({
             <div className="flex flex-row items-center space-x-4">
               <Avatar className="h-16 w-16 p-2">
                 <AvatarImage
-                  src={getClubImage(club.id)}
+                  src={getClubImage(club)}
                   alt={`${club.name} logo`}
                 />
                 <AvatarFallback>
