@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Heart, MessageCircle, Share, Send, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { doc, updateDoc } from "firebase/firestore";
+import { addDoc, doc, updateDoc } from "firebase/firestore";
 import { postsCollection } from "@/utils/firebase.browser";
 
 interface Comment {
@@ -113,13 +113,13 @@ interface NewPostData {
 
 const ACC_LOCATIONS = [
   {
-    id: "PV",
+    id: "balls",
     name: "PV (Balls)",
     address: "41 Arroyo Dr, Irvine, CA 92617",
   },
 
   {
-    id: "CDS",
+    id: "lodge",
     name: "CDS (Lodge)",
     address: "33000 Arroyo Dr, Irvine, CA 92617",
   },
@@ -147,7 +147,7 @@ const CAMPUS_LOCATIONS = [
     address: "Donald Bren Hall, Irvine, CA 92697",
   },
   {
-    id: "ALP",
+    id: "alp",
     name: "Anteater Learning Pavilion",
     address: "Aldrich Park, Irvine, CA 92697",
   },
@@ -307,6 +307,7 @@ export default function Feed({ club }: { club: Club }) {
         likedUsers: post.likes || "",
         comments: post.comments ? post.comments.split(";").length : 0,
         commentsString: post.comments || "",
+        locations: post.locations || "",
       }))
     );
 
@@ -458,19 +459,19 @@ export default function Feed({ club }: { club: Club }) {
     try {
       // Include meetup locations in the post creation
       const createdPost = {
-        id: Date.now(),
-        user: {
-          name: currentUser.name || "Current User",
-          avatar: currentUser.avatar || "/avatar0.png",
-          username: currentUser.id || "current.user",
+        clubid: club.id,
+        comments: "",
+        content: newPost.content.trim(),
+        likes: "",
+        posterid: currentUser.id,
+        timestamp: {
+          seconds: Math.floor(new Date(Date.now()).getTime() / 1000),
+          nanoseconds: 0,
         },
         title: newPost.title.trim(),
-        content: newPost.content.trim(),
         meetupLocations: newPost.meetupLocations,
-        timestamp: "Just now",
-        likes: 0,
-        comments: 0,
       };
+      await addDoc(postsCollection, createdPost);
 
       // Reset form and close dialog
       setNewPost({
@@ -479,9 +480,6 @@ export default function Feed({ club }: { club: Club }) {
         meetupLocations: { acc: [], campus: [] },
       });
       setIsCreatePostOpen(false);
-
-      // TODO: make API call to create post with meetup data
-      // await createPost(newPost);
     } catch (error) {
       console.error("Error creating post:", error);
     } finally {
@@ -833,6 +831,24 @@ export default function Feed({ club }: { club: Club }) {
                       <p className="text-gray-600 text-sm leading-relaxed">
                         {item.content}
                       </p>
+                      {item.locations && (
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          Locations I would like to meet at:{" "}
+                          {item.locations
+                            ?.split(",")
+                            .map((locationid) => {
+                              const location =
+                                ACC_LOCATIONS.find(
+                                  (loc) => loc.id === locationid
+                                ) ||
+                                CAMPUS_LOCATIONS.find(
+                                  (loc) => loc.id === locationid
+                                );
+                              return location?.name || "";
+                            })
+                            .join(", ")}
+                        </p>
+                      )}
                     </div>
 
                     {/* Interaction buttons */}

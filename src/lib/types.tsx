@@ -80,6 +80,7 @@ export interface FeedItem {
   likedUsers: string;
   comments: number;
   commentsString: string;
+  locations?: string;
 }
 
 export interface Account {
