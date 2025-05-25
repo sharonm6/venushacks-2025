@@ -1,9 +1,9 @@
 import { FlippableCards } from "@/components/ui/flip-cards";
 import { clubsDatabase, type Club } from "@/lib/clubDatabase";
-import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { index } from "@/services/profiles";
 
 // Define Club interface to match the testimonial structure
 interface ClubTestimonial {
@@ -16,29 +16,18 @@ interface ClubTestimonial {
   id: string; // Add club ID for navigation
 }
 
-// Mock current user's joined clubs
-const userJoinedClubIds = ["wics", "hack", "icssc"];
-
 // Function to convert Club to ClubTestimonial format
 const convertClubToTestimonial = (club: Club): ClubTestimonial => {
   // Generate a placeholder image based on club category/name
-  const getClubImage = (clubName: string): string => {
-    const imageMap: Record<string, string> = {
-      wics: "wics_logo.png",
-      hack: "hack_logo.png",
-      icssc: "icssc_logo.png",
-    };
-    return (
-      imageMap[club.id] ||
-      "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3"
-    );
+  const getClubImage = () => {
+    return club.id + "_logo.png";
   };
 
   return {
     description: club.description,
     name: club.fullName,
     designation: `${club.category} • ${club.meetingFrequency} • ${club.clubSize}`,
-    src: getClubImage(club.name),
+    src: getClubImage(),
     tags: club.tags,
     website: club.website,
     id: club.id, // Include club ID
@@ -49,11 +38,15 @@ const convertClubToTestimonial = (club: Club): ClubTestimonial => {
 interface ClubFlippableCardsProps {
   clubs: ClubTestimonial[];
   autoplay?: boolean;
+  joinedClubs: string[];
+  setJoinedClubs: (clubs: string[] | ((prev: string[]) => string[])) => void;
 }
 
 const ClubFlippableCards = ({
   clubs,
   autoplay = false,
+  joinedClubs = [],
+  setJoinedClubs,
 }: ClubFlippableCardsProps) => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const router = useRouter();
@@ -107,6 +100,8 @@ const ClubFlippableCards = ({
             onActiveChange={setActiveIndex}
             onVisitWebsite={handleVisitWebsite}
             onViewClubPage={handleViewClubPage}
+            joinedClubs={joinedClubs}
+            setJoinedClubs={setJoinedClubs}
           />
         </div>
       </div>
@@ -126,8 +121,22 @@ const ClubFlippableCards = ({
 };
 
 export function UserJoinedClubs() {
-  // Get user's joined clubs from the database
-  const userClubs: Club[] = userJoinedClubIds
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+  const [joinedClubs, setJoinedClubs] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadJoinedClubs();
+  }, []);
+
+  const loadJoinedClubs = async () => {
+    const profile = await index(userid);
+
+    setJoinedClubs(
+      profile.clubs.split(",").map((club) => club.split("(")[0]) || []
+    );
+  };
+
+  const userClubs: Club[] = joinedClubs
     .map((id: string) => clubsDatabase.getClubById(id))
     .filter((club): club is Club => club !== undefined);
 
@@ -154,7 +163,14 @@ export function UserJoinedClubs() {
     );
   }
 
-  return <ClubFlippableCards clubs={clubTestimonials} autoplay={false} />;
+  return (
+    <ClubFlippableCards
+      clubs={clubTestimonials}
+      autoplay={false}
+      joinedClubs={joinedClubs}
+      setJoinedClubs={setJoinedClubs}
+    />
+  );
 }
 
 // Export for backward compatibility

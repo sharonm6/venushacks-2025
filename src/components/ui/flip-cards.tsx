@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Eye, Check, Plus, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { doc, updateDoc } from "firebase/firestore";
+import { profilesCollection } from "@/utils/firebase.browser";
+import { index } from "@/services/profiles";
 
 type Testimonial = {
   description: string;
@@ -191,15 +194,20 @@ export const FlippableCards = ({
   onActiveChange,
   onVisitWebsite,
   onViewClubPage,
+  joinedClubs,
+  setJoinedClubs,
 }: {
   testimonials: Testimonial[];
   autoplay?: boolean;
   onActiveChange?: (index: number) => void;
   onVisitWebsite?: () => void;
   onViewClubPage?: () => void;
+  joinedClubs: string[];
+  setJoinedClubs: (clubs: string[] | ((prev: string[]) => string[])) => void;
 }) => {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+
   const [active, setActive] = useState(0);
-  const [joinedClubs, setJoinedClubs] = useState<Set<string>>(new Set());
   const [justJoinedClub, setJustJoinedClub] = useState<string | null>(null);
 
   const handleNext = useCallback(() => {
@@ -217,22 +225,53 @@ export const FlippableCards = ({
     [active]
   );
 
-  const handleJoinClub = useCallback((clubId: string, clubName: string) => {
-    if (!clubId) return;
+  const handleJoinClub = useCallback(
+    async (clubId: string, clubName: string) => {
+      if (!clubId) return;
 
-    // Add to joined clubs
-    setJoinedClubs((prev) => new Set([...prev, clubId]));
-    setJustJoinedClub(clubId);
+      const now = new Date();
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const formattedDate = `${
+        monthNames[now.getMonth()]
+      } ${now.getFullYear()}`;
 
-    // TODO: Here you would typically make an API call to join the club
-    console.log(`Joined club: ${clubName} (ID: ${clubId})`);
-  }, []);
+      const profileRef = doc(profilesCollection, userid || "");
+      const profile = await index(userid);
+
+      updateDoc(profileRef, {
+        clubs:
+          profile.clubs.length > 0
+            ? profile.clubs + "," + (clubId + "(" + formattedDate + ")")
+            : clubId + "(" + formattedDate + ")",
+      });
+
+      // Add to joined clubs
+      setJoinedClubs((prev) => [...prev, clubId]);
+      setJustJoinedClub(clubId);
+
+      console.log(`Joined club: ${clubName} (ID: ${clubId})`);
+    },
+    []
+  );
 
   const isClubJoined = useCallback(
     (clubId: string) => {
       if (!clubId) return false;
       return (
-        joinedClubs.has(clubId) ||
+        joinedClubs?.includes(clubId) ||
         testimonials.find((t) => t.id === clubId)?.isJoined
       );
     },

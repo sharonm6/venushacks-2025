@@ -12,8 +12,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { doc, updateDoc } from "firebase/firestore";
+import { profilesCollection } from "@/utils/firebase.browser";
+import { index } from "@/services/profiles";
 
 interface Club {
   id: string;
@@ -53,8 +56,9 @@ const SparkleEffect = () => {
 };
 
 export default function ClubPostcard() {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
   const router = useRouter();
-  const [joinedClubs, setJoinedClubs] = useState<Set<string>>(new Set());
+  const [joinedClubs, setJoinedClubs] = useState<string[]>([]);
   const [sparklingClubs, setSparklingClubs] = useState<Set<string>>(new Set());
 
   // Sample data for each club: Must be taken from DB
@@ -89,26 +93,69 @@ export default function ClubPostcard() {
     },
   ];
 
-  const handleJoinClub = useCallback((clubId: string, clubName: string) => {
-    // Add sparkle effect
-    setSparklingClubs((prev) => new Set([...prev, clubId]));
+  const loadJoinedClubs = async () => {
+    const profile = await index(userid);
 
-    // Add to joined clubs after a short delay
-    setTimeout(() => {
-      setJoinedClubs((prev) => new Set([...prev, clubId]));
-      // Remove sparkle effect after join animation completes
-      setTimeout(() => {
-        setSparklingClubs((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(clubId);
-          return newSet;
-        });
-      }, 1000);
-    }, 10);
+    setJoinedClubs(
+      profile.clubs.split(",").map((club) => club.split("(")[0]) || []
+    );
+  };
 
-    // TODO: Here you would typically make an API call to join the club
-    console.log(`Joined club: ${clubName} (ID: ${clubId})`);
+  useEffect(() => {
+    loadJoinedClubs();
   }, []);
+
+  const handleJoinClub = useCallback(
+    async (clubId: string, clubName: string) => {
+      // Add sparkle effect
+      setSparklingClubs((prev) => new Set([...prev, clubId]));
+
+      const now = new Date();
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const formattedDate = `${
+        monthNames[now.getMonth()]
+      } ${now.getFullYear()}`;
+
+      const profileRef = doc(profilesCollection, userid || "");
+      const profile = await index(userid);
+
+      updateDoc(profileRef, {
+        clubs:
+          profile.clubs.length > 0
+            ? profile.clubs + "," + (clubId + "(" + formattedDate + ")")
+            : clubId + "(" + formattedDate + ")",
+      });
+
+      // Add to joined clubs after a short delay
+      setTimeout(() => {
+        setJoinedClubs((prev) => [...prev, clubId]);
+        // Remove sparkle effect after join animation completes
+        setTimeout(() => {
+          setSparklingClubs((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(clubId);
+            return newSet;
+          });
+        }, 1000);
+      }, 10);
+
+      console.log(`Joined club: ${clubName} (ID: ${clubId})`);
+    },
+    []
+  );
 
   const handleViewClub = useCallback(
     (clubId: string) => {
@@ -120,7 +167,7 @@ export default function ClubPostcard() {
 
   const isClubJoined = useCallback(
     (clubId: string) => {
-      return joinedClubs.has(clubId);
+      return joinedClubs.includes(clubId);
     },
     [joinedClubs]
   );

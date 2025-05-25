@@ -30,6 +30,9 @@ import Feed from "@/components/feed";
 import { type Club } from "@/lib/clubDatabase";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { index as indexProfiles } from "@/services/profiles";
+import { profilesCollection } from "@/utils/firebase.browser";
+import { doc, updateDoc } from "firebase/firestore";
 
 interface ClubBannerProps {
   club: Club;
@@ -40,6 +43,7 @@ export default function ClubBanner({
   club,
   initialJoinStatus = false,
 }: ClubBannerProps) {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
   const router = useRouter();
   const [isJoined, setIsJoined] = useState(initialJoinStatus);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +52,16 @@ export default function ClubBanner({
   const [bannerExpanded, setBannerExpanded] = useState(true);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const loadJoined = async () => {
+    const profile = await indexProfiles(userid);
+
+    setIsJoined(profile.clubs.includes(club.id) || false);
+  };
+
+  useEffect(() => {
+    loadJoined();
+  }, []);
 
   // Calculate content height for smooth animation
   useEffect(() => {
@@ -87,7 +101,34 @@ export default function ClubBanner({
     setIsLoading(true);
     try {
       // TODO: Replace with actual API call
-      // await joinClub(club.id, userId);
+      const now = new Date();
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const formattedDate = `${
+        monthNames[now.getMonth()]
+      } ${now.getFullYear()}`;
+
+      const profileRef = doc(profilesCollection, userid || "");
+      const profile = await indexProfiles(userid);
+
+      updateDoc(profileRef, {
+        clubs:
+          profile.clubs.length > 0
+            ? profile.clubs + "," + (club.id + "(" + formattedDate + ")")
+            : club.id + "(" + formattedDate + ")",
+      });
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -108,8 +149,17 @@ export default function ClubBanner({
   const handleLeaveClub = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // await leaveClub(club.id, userId);
+      const profileRef = doc(profilesCollection, userid || "");
+      const profile = await indexProfiles(userid);
+
+      const updatedClubs = profile.clubs
+        .split(",")
+        .filter((clubEntry: string) => !clubEntry.startsWith(club.id))
+        .join(",");
+
+      updateDoc(profileRef, {
+        clubs: updatedClubs,
+      });
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -160,7 +210,7 @@ export default function ClubBanner({
             </div>
             <div className="flex space-x-2">
               {/* Join/Leave Club Button */}
-              {!isJoined ? (
+              {isJoined !== null && !isJoined ? (
                 <Button
                   size="sm"
                   onClick={handleJoinClub}

@@ -4,17 +4,29 @@ import { clubsDatabase, type Club } from "@/lib/clubDatabase";
 import ClubBanner from "@/components/club-banner";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { index as indexProfiles } from "@/services/profiles";
 
 export default function ClubPage() {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
   const params = useParams();
   const clubId = params.id as string;
   const [club, setClub] = useState<Club | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialJoined, setInitialJoined] = useState<boolean | null>(null);
+
+  const loadClubInfo = async () => {
+    const foundClub = clubsDatabase.getClubById(clubId);
+    setClub(foundClub || null);
+
+    const profile = await indexProfiles(userid);
+
+    setInitialJoined(profile.clubs.includes(clubId) || false);
+  };
 
   useEffect(() => {
     if (clubId) {
-      const foundClub = clubsDatabase.getClubById(clubId);
-      setClub(foundClub || null);
+      loadClubInfo();
+
       setLoading(false);
     }
   }, [clubId]);
@@ -118,7 +130,7 @@ export default function ClubPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
         >
-          <ClubBanner club={club} />
+          <ClubBanner club={club} initialJoinStatus={initialJoined} />
         </motion.div>
       </motion.div>
     </AnimatePresence>
