@@ -122,7 +122,6 @@ export default function MeetVerification({
               Both of you need to agree before your identities are revealed and
               you can plan your meetup!
             </p>
-            {/* NEW: Quick profile access hint */}
             <p className="text-xs text-gray-500">
               💡 Click on {otherUserName}'s avatar to view their profile
               (limited info until you both agree)

@@ -464,9 +464,10 @@ export default function MessagesPage() {
                 currentUserName={userName}
                 otherUserAvatar={chatUserPicture}
                 otherUserName={selectedChat.name}
-                onRevealComplete={handleRevealComplete} // This now expects a parameter
-                otherUserId={selectedChat.userId} // NEW: Pass the other user's ID
+                onRevealComplete={handleRevealComplete}
+                otherUserId={selectedChat.userId}
                 simulateUser2Ready={true}
+                onBackToChat={handleBackToChat} // NEW: Pass the back function
               />
             </div>
           </div>

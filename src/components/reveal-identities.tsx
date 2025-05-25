@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, User, ArrowRight, CheckCircle } from "lucide-react";
+import {
+  Sparkles,
+  User,
+  ArrowRight,
+  CheckCircle,
+  ArrowLeft,
+} from "lucide-react";
 
 interface RevealIdentitiesProps {
   currentUserAvatar: string;
@@ -17,6 +23,7 @@ interface RevealIdentitiesProps {
   otherUserId: string;
   // NEW: Add props to simulate the state
   simulateUser2Ready?: boolean;
+  onBackToChat: () => void;
 }
 
 export default function RevealIdentities({
@@ -27,6 +34,7 @@ export default function RevealIdentities({
   onRevealComplete,
   otherUserId, // NEW: Now we have access to the other user's ID
   simulateUser2Ready = true, // Default to true for simulation
+  onBackToChat, // NEW: Function to go back to chat
 }: RevealIdentitiesProps) {
   const [animationStep, setAnimationStep] = useState(0);
   const [showUser2Ready, setShowUser2Ready] = useState(false);
@@ -54,8 +62,6 @@ export default function RevealIdentities({
   const handleViewProfile = () => {
     onRevealComplete(otherUserId);
   };
-
-  // Update the main container and add proper spacing
 
   return (
     <div className="p-8 min-h-full flex flex-col">
@@ -106,7 +112,7 @@ export default function RevealIdentities({
               <Sparkles className="h-12 w-12 text-pink-500 animate-bounce delay-100" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Time to Meet!{" "}
+              Time to Meet!
             </h1>
             <p className="text-lg text-gray-600"></p>
           </div>
@@ -132,7 +138,7 @@ export default function RevealIdentities({
 
               {/* Ready indicator for current user */}
               <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white rounded-full px-3 py-1 text-xs font-medium">
-                Ready!
+                Ready!{" "}
               </div>
             </div>
             <div className="text-center">
@@ -185,7 +191,7 @@ export default function RevealIdentities({
                     : "opacity-0 scale-50"
                 }`}
               >
-                Ready!
+                Ready!{" "}
               </div>
             </div>
             <div className="text-center">
@@ -205,7 +211,9 @@ export default function RevealIdentities({
           </div>
         </div>
       </div>
+
       <div className="h-12"></div>
+
       <div
         className={`transition-all duration-1000 pb-8 ${
           animationStep >= 3
@@ -245,18 +253,31 @@ export default function RevealIdentities({
             </div>
 
             <div className="space-y-3">
-              <Button
-                onClick={handleViewProfile}
-                className="w-full bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700 text-white text-lg py-3 animate-pulse"
-                size="lg"
-              >
-                <User className="h-5 w-5 mr-2" />
-                View {otherUserName}'s Profile
-              </Button>
+              {/* NEW: Two button layout */}
+              <div className="flex space-x-3">
+                <Button
+                  onClick={onBackToChat}
+                  variant="outline"
+                  className="flex-1 border-gray-300 text-gray-600 hover:bg-gray-50"
+                  size="lg"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Continue Chatting
+                </Button>
+
+                <Button
+                  onClick={handleViewProfile}
+                  className="flex-1 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700 text-white"
+                  size="lg"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  View Profile
+                </Button>
+              </div>
 
               <p className="text-xs text-gray-500">
-                This will take you to their profile page where you can learn
-                more about them and plan your meetup!
+                You can continue chatting or explore {otherUserName}'s full
+                profile to plan your meetup!
               </p>
             </div>
           </CardContent>
