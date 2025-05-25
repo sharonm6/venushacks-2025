@@ -22,61 +22,7 @@ import { index as indexMessages } from "@/services/messages";
 
 import { Chat, Conversation, ChatMessage } from "@/lib/types";
 import { messagesCollection } from "@/utils/firebase.browser";
-import { query, where, orderBy } from "firebase/firestore";
-
-// const mockMessages: Record<number, Message[]> = {
-//   1: [
-//     {
-//       id: 1,
-//       senderId: "user1",
-//       senderName: "Sarah Chen",
-//       senderAvatar: "https://via.placeholder.com/40",
-//       message: "Hey! How's the project going?",
-//       timestamp: "10:30 AM",
-//       isCurrentUser: false,
-//     },
-//     {
-//       id: 2,
-//       senderId: "user1",
-//       senderName: "Sarah Chen",
-//       senderAvatar: "https://via.placeholder.com/40",
-//       message: "I finished the frontend mockups",
-//       timestamp: "10:31 AM",
-//       isCurrentUser: false,
-//     },
-//     {
-//       id: 3,
-//       senderId: "currentUser",
-//       senderName: "You",
-//       senderAvatar: "https://via.placeholder.com/40",
-//       message: "Looks great! I love the color scheme",
-//       timestamp: "10:35 AM",
-//       isCurrentUser: true,
-//     },
-//   ],
-//   2: [
-//     {
-//       id: 4,
-//       senderId: "user2",
-//       senderName: "Emily Rodriguez",
-//       senderAvatar: "https://via.placeholder.com/40",
-//       message: "Thanks for the help with the project!",
-//       timestamp: "Yesterday",
-//       isCurrentUser: false,
-//     },
-//   ],
-//   3: [
-//     {
-//       id: 5,
-//       senderId: "user3",
-//       senderName: "Jessica Kim",
-//       senderAvatar: "https://via.placeholder.com/40",
-//       message: "See you at the meeting tomorrow",
-//       timestamp: "Yesterday",
-//       isCurrentUser: false,
-//     },
-//   ],
-// };
+import { query, where, orderBy, addDoc } from "firebase/firestore";
 
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
@@ -84,6 +30,8 @@ export default function MessagesPage() {
   const [userName, setUserName] = useState<string>("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [messageToSend, setMessageToSend] = useState<string>("");
+
   const [showMeetVerification, setShowMeetVerification] = useState(false);
   const currentUserId = "9SDq83UWnqdtcUFKeYUZ"; // This would come from your auth system
 
@@ -103,28 +51,28 @@ export default function MessagesPage() {
     return conversations;
   };
 
-  const loadChatMessageInfo = async (conversation: Conversation) => {
+  const loadChatMessageInfo = async (conversationid: string) => {
     const chatMessages = await indexMessages(
       query(
         messagesCollection,
-        where("conversationid", "==", conversation.id),
+        where("conversationid", "==", conversationid),
         orderBy("timestamp", "desc")
       )
     );
 
-    const lastChatMessage = chatMessages[0];
-
-    return chatMessages.length > 0
-      ? {
-          lastMessage: lastChatMessage.content,
-          timestamp: new Date(
-            lastChatMessage.timestamp.seconds * 1000
-          ).toLocaleDateString(),
-        }
-      : {
-          lastMessage: "",
-          timestamp: Date.now(),
-        };
+    if (chatMessages.length > 0) {
+      const lastChatMessage = chatMessages[chatMessages.length - 1];
+      return {
+        lastMessage: lastChatMessage.content,
+        timestamp: new Date(
+          lastChatMessage.timestamp.seconds * 1000
+        ).toLocaleDateString(),
+      };
+    } else
+      return {
+        lastMessage: "",
+        timestamp: new Date(Date.now()).toLocaleDateString(),
+      };
   };
 
   const loadChats = async () => {
@@ -146,7 +94,7 @@ export default function MessagesPage() {
 
         setUserName(userProfile!.name);
 
-        const chatMessageInfo = await loadChatMessageInfo(conversation);
+        const chatMessageInfo = await loadChatMessageInfo(conversation.id);
 
         return {
           id: idx,
@@ -178,7 +126,7 @@ export default function MessagesPage() {
       query(
         messagesCollection,
         where("conversationid", "==", conversationid),
-        orderBy("timestamp", "desc")
+        orderBy("timestamp", "asc")
       )
     );
 
@@ -205,6 +153,39 @@ export default function MessagesPage() {
     loadChatMessages(chat.conversationid, chat.name);
     setSelectedChat(chat);
     setShowMeetVerification(false); // Close meet verification when switching chats
+  };
+
+  const handleMessageSend = async () => {
+    if (messageToSend.trim() === "") return;
+
+    await addDoc(messagesCollection, {
+      conversationid: selectedChat?.conversationid,
+      senderid: currentUserId,
+      content: messageToSend,
+      timestamp: new Date(),
+    });
+    setMessageToSend("");
+
+    if (!selectedChat) return;
+
+    await loadChatMessages(selectedChat.conversationid, selectedChat.name);
+
+    const chatMessageInfo = await loadChatMessageInfo(
+      selectedChat.conversationid
+    );
+
+    const updatedChat = {
+      ...selectedChat,
+      lastMessage: chatMessageInfo.lastMessage,
+      timestamp: chatMessageInfo.timestamp,
+    };
+
+    setChats((prevChats) => {
+      const filtered = prevChats.filter((chat) => chat.id !== selectedChat.id);
+      return [updatedChat, ...filtered];
+    });
+
+    setSelectedChat(updatedChat);
   };
 
   return (
@@ -272,8 +253,16 @@ export default function MessagesPage() {
                       type="text"
                       placeholder={`Message ${selectedChat.name}...`}
                       className="flex-1"
+                      value={messageToSend}
+                      onChange={(e) => setMessageToSend(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleMessageSend();
+                        }
+                      }}
                     />
-                    <Button type="submit" size="sm">
+                    <Button type="submit" size="sm" onClick={handleMessageSend}>
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
