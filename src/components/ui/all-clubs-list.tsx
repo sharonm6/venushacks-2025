@@ -26,34 +26,11 @@ const convertClubToTestimonial = (
   club: Club,
   isJoined: boolean
 ): ClubTestimonial => {
-  // Generate a placeholder image based on club category/name
-  const getClubImage = (clubId: string): string => {
-    const imageMap: Record<string, string> = {
-      wics: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      hack: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      icssc: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      acm: "https://images.unsplash.com/photo-1517430816045-df4b7de11d1d?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      ai: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      blackInTech: "https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      blockchain: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      "commit-the-change": "https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      cyber: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      data: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      design: "https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      quantum: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-      vgdc: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3",
-    };
-    return (
-      imageMap[clubId] ||
-      "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3"
-    );
-  };
-
   return {
     description: club.description,
     name: club.fullName,
     designation: `${club.category} • ${club.meetingFrequency} • ${club.clubSize}`,
-    src: getClubImage(club.id), // Fixed: Use club.id instead of clubId
+    src: club.logo, // Use the logo field from the database
     tags: club.tags,
     website: club.website,
     id: club.id,
@@ -111,7 +88,7 @@ const ClubFlippableCards = React.memo(
     }, [router]);
 
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col p-8">
         {/* Compact Header */}
         <div className="text-center py-4">
           <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-1">
@@ -154,7 +131,9 @@ ClubFlippableCards.displayName = "ClubFlippableCards";
 
 export function AllClubsList() {
   const [fadeIn, setFadeIn] = useState(false);
-  const [clubTestimonials, setClubTestimonials] = useState<ClubTestimonial[]>([]);
+  const [clubTestimonials, setClubTestimonials] = useState<ClubTestimonial[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -162,7 +141,7 @@ export function AllClubsList() {
     const loadClubs = async () => {
       try {
         console.log("Loading clubs from database..."); // Debug log
-        
+
         // Get all clubs from the database
         const allClubs: Club[] = clubsDatabase.getAllClubs();
         console.log("All clubs loaded:", allClubs.length); // Debug log
@@ -192,7 +171,12 @@ export function AllClubsList() {
   }, []);
 
   // Debug log to check current state
-  console.log("Current state - Loading:", loading, "Club count:", clubTestimonials.length);
+  console.log(
+    "Current state - Loading:",
+    loading,
+    "Club count:",
+    clubTestimonials.length
+  );
 
   if (loading) {
     return (
