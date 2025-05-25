@@ -1,8 +1,11 @@
+"use client";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
-import { motion, AnimatePresence } from "motion/react";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
+import { ExternalLink, Eye, Check, Plus, ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Testimonial = {
   description: string;
@@ -10,17 +13,177 @@ type Testimonial = {
   designation: string;
   src: string;
   tags?: string[];
-  website?: string; // Add website
-  id?: string; // Add id for navigation
+  website?: string;
+  id?: string;
+  isJoined?: boolean;
 };
 
-interface FlippableCardsProps {
-  testimonials: Testimonial[];
-  autoplay?: boolean;
-  onActiveChange?: (index: number) => void;
-  onVisitWebsite?: () => void; // Add website handler
-  onViewClubPage?: () => void; // Add club page handler
-}
+// Word-by-word blur animation component (like the original)
+const WordBlurAnimation = ({ text }: { text: string }) => {
+  return (
+    <>
+      {text.split(" ").map((word, index) => (
+        <motion.span
+          key={index}
+          initial={{
+            filter: "blur(10px)",
+            opacity: 0,
+            y: 5,
+          }}
+          animate={{
+            filter: "blur(0px)",
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.2,
+            ease: "easeInOut",
+            delay: 0.02 * index, // Staggered delay for each word
+          }}
+          className="inline-block"
+        >
+          {word}&nbsp;
+        </motion.span>
+      ))}
+    </>
+  );
+};
+
+// Smart tag display component with proper width calculation
+const SmartTagDisplay = ({ tags }: { tags: string[] }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [displayState, setDisplayState] = useState<{
+    displayTags: string[];
+    extraCount: number;
+  }>({ displayTags: tags, extraCount: 0 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !tags.length) return;
+
+    // Use setTimeout to ensure the component is fully rendered
+    const calculateTags = () => {
+      if (!containerRef.current) return;
+
+      const container = containerRef.current;
+      // Get the actual available width (accounting for padding and margins)
+      const containerWidth = container.getBoundingClientRect().width;
+
+      // Create a temporary measuring container
+      const tempContainer = document.createElement("div");
+      tempContainer.style.position = "absolute";
+      tempContainer.style.visibility = "hidden";
+      tempContainer.style.top = "-9999px";
+      tempContainer.style.left = "-9999px";
+      tempContainer.style.display = "flex";
+      tempContainer.style.gap = "4px";
+      tempContainer.style.alignItems = "center";
+      tempContainer.style.fontSize = "12px"; // text-xs
+      tempContainer.style.fontFamily = getComputedStyle(container).fontFamily;
+      document.body.appendChild(tempContainer);
+
+      let totalWidth = 0;
+      let fittingTags = 0;
+      const plusBadgeWidth = 40; // Estimated width for "+n" badge
+
+      // Measure each tag
+      for (let i = 0; i < tags.length; i++) {
+        const tempBadge = document.createElement("span");
+        tempBadge.className =
+          "text-xs px-2 py-0.5 bg-purple-100 text-purple-700 whitespace-nowrap inline-flex items-center rounded-md border border-transparent font-medium";
+        tempBadge.textContent = tags[i];
+        tempBadge.style.fontSize = "12px";
+        tempBadge.style.padding = "2px 8px";
+        tempContainer.appendChild(tempBadge);
+
+        // Force a reflow to get accurate measurements
+        tempBadge.offsetHeight;
+        const badgeWidth = tempBadge.getBoundingClientRect().width;
+
+        const gapWidth = i > 0 ? 4 : 0; // Gap between badges
+        const widthWithGap = totalWidth + gapWidth + badgeWidth;
+
+        // Check if we need to reserve space for "+n" badge
+        const needsPlusBadge = i < tags.length - 1;
+        const totalNeededWidth =
+          widthWithGap + (needsPlusBadge ? 4 + plusBadgeWidth : 0);
+
+        if (totalNeededWidth <= containerWidth - 8) {
+          // 8px buffer
+          totalWidth = widthWithGap;
+          fittingTags = i + 1;
+        } else {
+          break;
+        }
+      }
+
+      document.body.removeChild(tempContainer);
+
+      // Ensure we show at least 3 tags if available, even if measurements are off
+      const minTags = Math.min(3, tags.length);
+      if (fittingTags < minTags && tags.length >= minTags) {
+        fittingTags = minTags;
+      }
+
+      // Set the display state
+      if (fittingTags >= tags.length) {
+        setDisplayState({ displayTags: tags, extraCount: 0 });
+      } else {
+        // If we can't fit all tags, show as many as possible with "+n"
+        const safeTagCount = Math.max(1, fittingTags - 1);
+        setDisplayState({
+          displayTags: tags.slice(0, safeTagCount),
+          extraCount: tags.length - safeTagCount,
+        });
+      }
+    };
+
+    // Use setTimeout to ensure DOM is ready
+    const timeoutId = setTimeout(calculateTags, 100);
+
+    // Also add a resize observer for responsiveness
+    const resizeObserver = new ResizeObserver(calculateTags);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
+  }, [tags, mounted]);
+
+  if (!tags.length || !mounted) return null;
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex items-center gap-1 mb-3 min-h-[24px] w-full"
+    >
+      {displayState.displayTags.map((tag, tagIndex) => (
+        <Badge
+          key={tagIndex}
+          variant="secondary"
+          className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 hover:bg-purple-200 whitespace-nowrap flex-shrink-0"
+        >
+          {tag}
+        </Badge>
+      ))}
+      {displayState.extraCount > 0 && (
+        <Badge
+          variant="secondary"
+          className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 whitespace-nowrap flex-shrink-0"
+        >
+          +{displayState.extraCount}
+        </Badge>
+      )}
+    </div>
+  );
+};
 
 export const FlippableCards = ({
   testimonials,
@@ -28,221 +191,234 @@ export const FlippableCards = ({
   onActiveChange,
   onVisitWebsite,
   onViewClubPage,
-}: FlippableCardsProps) => {
-  const [active, setActive] = useState<number>(0);
-  const [isClient, setIsClient] = useState<boolean>(false);
-  const [rotations, setRotations] = useState<number[]>([]);
+}: {
+  testimonials: Testimonial[];
+  autoplay?: boolean;
+  onActiveChange?: (index: number) => void;
+  onVisitWebsite?: () => void;
+  onViewClubPage?: () => void;
+}) => {
+  const [active, setActive] = useState(0);
+  const [joinedClubs, setJoinedClubs] = useState<Set<string>>(new Set());
+  const [justJoinedClub, setJustJoinedClub] = useState<string | null>(null);
 
-  // Initialize client-side state
-  useEffect(() => {
-    setIsClient(true);
-    const newRotations = testimonials.map(
-      () => Math.floor(Math.random() * 21) - 10
-    );
-    setRotations(newRotations);
+  const handleNext = useCallback(() => {
+    setActive((prev) => (prev + 1) % testimonials.length);
   }, [testimonials.length]);
 
-  const handleNext = (): void => {
-    const newActive = (active + 1) % testimonials.length;
-    setActive(newActive);
-    onActiveChange?.(newActive);
-  };
+  const handlePrev = useCallback(() => {
+    setActive((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  }, [testimonials.length]);
 
-  const handlePrev = (): void => {
-    const newActive = (active - 1 + testimonials.length) % testimonials.length;
-    setActive(newActive);
-    onActiveChange?.(newActive);
-  };
+  const isActive = useCallback(
+    (index: number) => {
+      return index === active;
+    },
+    [active]
+  );
 
-  const isActive = (index: number): boolean => {
-    return index === active;
-  };
+  const handleJoinClub = useCallback((clubId: string, clubName: string) => {
+    if (!clubId) return;
+
+    // Add to joined clubs
+    setJoinedClubs((prev) => new Set([...prev, clubId]));
+    setJustJoinedClub(clubId);
+
+    // TODO: Here you would typically make an API call to join the club
+    console.log(`Joined club: ${clubName} (ID: ${clubId})`);
+  }, []);
+
+  const isClubJoined = useCallback(
+    (clubId: string) => {
+      if (!clubId) return false;
+      return (
+        joinedClubs.has(clubId) ||
+        testimonials.find((t) => t.id === clubId)?.isJoined
+      );
+    },
+    [joinedClubs, testimonials]
+  );
 
   useEffect(() => {
     if (autoplay) {
       const interval = setInterval(handleNext, 5000);
       return () => clearInterval(interval);
     }
-  }, [autoplay, active]);
+  }, [autoplay, handleNext]);
 
-  // Get consistent rotation value
-  const getRotation = (index: number): number => {
-    return rotations[index] || 0;
+  useEffect(() => {
+    if (onActiveChange) {
+      onActiveChange(active);
+    }
+  }, [active, onActiveChange]);
+
+  const randomRotateY = () => {
+    return Math.floor(Math.random() * 21) - 10;
   };
 
-  // Don't render dynamic content until client-side hydration is complete
-  if (!isClient) {
-    return (
-      <div className="mx-auto max-w-sm px-4 py-4 font-sans antialiased md:max-w-4xl md:px-8">
-        <div className="relative grid grid-cols-1 gap-8 md:grid-cols-2">
-          {/* Left side - Image with buttons */}
-          <div className="space-y-4">
-            <div className="relative h-64 w-full bg-white rounded-2xl shadow-lg overflow-hidden">
-              {testimonials.map((testimonial, index) => (
-                <div
-                  key={testimonial.src}
-                  className={`absolute inset-0 transition-opacity duration-400 ${
-                    index === 0 ? "opacity-100" : "opacity-70"
-                  }`}
-                  style={{
-                    zIndex: index === 0 ? 40 : testimonials.length + 2 - index,
-                  }}
-                >
-                  <img
-                    src={testimonial.src}
-                    alt={testimonial.name}
-                    width={500}
-                    height={500}
-                    draggable={false}
-                    className="h-full w-full object-cover object-center"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Buttons under the image */}
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={onVisitWebsite}
-                className="px-4 py-2 text-sm bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-200 font-medium"
-              >
-                Visit Website
-              </button>
-              <button
-                onClick={onViewClubPage}
-                className="px-4 py-2 text-sm border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 transition-all duration-200 font-medium"
-              >
-                View Club Page
-              </button>
-            </div>
-          </div>
-
-          {/* Right side - Content */}
-          <div className="flex flex-col justify-between py-2">
-            <div>
-              <h3 className="text-lg font-bold text-black dark:text-white mb-2">
-                {testimonials[0]?.name}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-neutral-500 mb-3">
-                {testimonials[0]?.designation}
-              </p>
-
-              {/* Badges under title */}
-              {testimonials[0]?.tags && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {testimonials[0].tags.slice(0, 4).map((tag: string) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="text-xs bg-gradient-to-r from-pink-100 to-purple-100 text-purple-700 border-purple-200"
-                    >
-                      {tag.replace("-", " ")}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              <p className="text-sm text-gray-500 dark:text-neutral-300 leading-relaxed">
-                {testimonials[0]?.description}
-              </p>
-            </div>
-
-            {/* Navigation arrows */}
-            <div className="flex gap-2 pt-4">
-              <Button
-                onClick={handlePrev}
-                className="group/button flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
-              >
-                <IconArrowLeft className="h-4 w-4 text-black transition-transform duration-300 group-hover/button:rotate-12 dark:text-neutral-400" />
-              </Button>
-              <Button
-                onClick={handleNext}
-                className="group/button flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
-              >
-                <IconArrowRight className="h-4 w-4 text-black transition-transform duration-300 group-hover/button:-rotate-12 dark:text-neutral-400" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-sm px-4 py-4 font-sans antialiased md:max-w-4xl md:px-8">
-      <div className="relative grid grid-cols-1 gap-8 md:grid-cols-2">
-        {/* Left side - Image with buttons */}
-        <div className="space-y-4">
-          <div className="relative h-64 w-full">
+    <div className="max-w-sm md:max-w-4xl mx-auto antialiased font-sans px-4 md:px-8 lg:px-12 py-20">
+      <div className="relative grid grid-cols-1 md:grid-cols-2 gap-20">
+        <div>
+          <div className="relative h-80 w-full">
             <AnimatePresence>
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={testimonial.src}
-                  initial={{
-                    opacity: 0,
-                    scale: 0.9,
-                    z: -100,
-                    rotate: getRotation(index),
-                  }}
-                  animate={{
-                    opacity: isActive(index) ? 1 : 0.7,
-                    scale: isActive(index) ? 1 : 0.95,
-                    z: isActive(index) ? 0 : -100,
-                    rotate: isActive(index) ? 0 : getRotation(index),
-                    zIndex: isActive(index)
-                      ? 40
-                      : testimonials.length + 2 - index,
-                    y: isActive(index) ? [0, -20, 0] : 0,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    scale: 0.9,
-                    z: 100,
-                    rotate: getRotation(index),
-                  }}
-                  transition={{
-                    duration: 0.4,
-                    ease: "easeInOut",
-                  }}
-                  className="absolute inset-0 origin-bottom bg-white rounded-2xl shadow-lg overflow-hidden"
-                >
-                  <img
-                    src={testimonial.src}
-                    alt={testimonial.name}
-                    width={500}
-                    height={500}
-                    draggable={false}
-                    className="h-full w-full object-cover object-center"
-                  />
-                </motion.div>
-              ))}
+              {testimonials.map((testimonial, index) => {
+                const isJoined = isClubJoined(testimonial.id || "");
+                const wasJustJoined = justJoinedClub === testimonial.id;
+
+                return (
+                  <motion.div
+                    key={testimonial.src}
+                    initial={{
+                      opacity: 0,
+                      scale: 0.9,
+                      z: -100,
+                      rotate: randomRotateY(),
+                    }}
+                    animate={{
+                      opacity: isActive(index) ? 1 : 0.7,
+                      scale: isActive(index) ? 1 : 0.95,
+                      z: isActive(index) ? 0 : -100,
+                      rotate: isActive(index) ? 0 : randomRotateY(),
+                      zIndex: isActive(index)
+                        ? 999
+                        : testimonials.length + 2 - index,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      scale: 0.9,
+                      z: 100,
+                      rotate: randomRotateY(),
+                    }}
+                    transition={{
+                      duration: 0.4,
+                      ease: "easeInOut",
+                    }}
+                    className="absolute inset-0 origin-bottom"
+                  >
+                    <div
+                      className={cn(
+                        "relative h-full w-full rounded-3xl p-6 origin-bottom flex flex-col justify-between",
+                        "bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100",
+                        "border-2 border-pink-200 shadow-lg"
+                      )}
+                    >
+                      {/* Join Status Indicator with Animation */}
+                      <div className="absolute top-4 right-4 z-10">
+                        <AnimatePresence mode="wait">
+                          {isJoined ? (
+                            <motion.div
+                              key="joined"
+                              initial={
+                                wasJustJoined
+                                  ? { scale: 0, rotate: -180 }
+                                  : false
+                              }
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 25,
+                                duration: 0.6,
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium shadow-sm cursor-default"
+                            >
+                              <motion.div
+                                initial={wasJustJoined ? { scale: 0 } : false}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.2 }}
+                              >
+                                <Check className="h-3 w-3" />
+                              </motion.div>
+                              Joined
+                            </motion.div>
+                          ) : (
+                            <motion.button
+                              key="join"
+                              initial={{ scale: 1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() =>
+                                handleJoinClub(
+                                  testimonial.id || "",
+                                  testimonial.name
+                                )
+                              }
+                              className="flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-700 rounded-full text-xs font-medium shadow-sm transition-colors"
+                            >
+                              <Plus className="h-3 w-3" />
+                              Join
+                            </motion.button>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Logo Image - Centered and larger since no description */}
+                      <div className="flex justify-center items-center flex-1">
+                        <div className="h-48 w-full bg-white rounded-2xl p-6 flex items-center justify-center shadow-sm">
+                          <img
+                            src={testimonial.src}
+                            alt={testimonial.name}
+                            className="max-h-36 max-w-full object-contain"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bottom section with tags and buttons */}
+                      <div className="mt-4">
+                        {/* Smart Tags - Dynamically fit as many as possible */}
+                        {testimonial.tags && testimonial.tags.length > 0 && (
+                          <SmartTagDisplay tags={testimonial.tags} />
+                        )}
+
+                        <div className="flex justify-center space-x-2">
+                          {onVisitWebsite && testimonial.website && (
+                            <button
+                              onClick={onVisitWebsite}
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Website
+                            </button>
+                          )}
+                          {onViewClubPage && testimonial.id && (
+                            <motion.button
+                              onClick={onViewClubPage}
+                              className={cn(
+                                "flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg transition-colors",
+                                wasJustJoined && isActive(index)
+                                  ? "bg-purple-200 text-purple-800 ring-2 ring-purple-300 animate-pulse"
+                                  : "bg-purple-100 hover:bg-purple-200 text-purple-700"
+                              )}
+                              animate={
+                                wasJustJoined && isActive(index)
+                                  ? {
+                                      scale: [1, 1.05, 1],
+                                      transition: {
+                                        repeat: Infinity,
+                                        duration: 0.5,
+                                      },
+                                    }
+                                  : {}
+                              }
+                            >
+                              <Eye className="h-3 w-3" />
+                              View Club
+                              {wasJustJoined && isActive(index) && (
+                                <ArrowDown className="h-3 w-3 ml-1 animate-bounce" />
+                              )}
+                            </motion.button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
-
-          {/* Buttons under the image with animation */}
-          <motion.div
-            className="flex justify-center gap-3 p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <button
-              onClick={onVisitWebsite}
-              className="px-4 py-2 text-sm bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all duration-200 font-medium"
-            >
-              Visit Website
-            </button>
-            <button
-              onClick={onViewClubPage}
-              className="px-4 py-2 text-sm border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 transition-all duration-200 font-medium"
-            >
-              View Club Page
-            </button>
-          </motion.div>
         </div>
-
-        {/* Right side - Content */}
-        <div className="flex flex-col justify-between py-2">
+        <div className="flex justify-between flex-col py-4">
           <motion.div
             key={active}
             initial={{
@@ -262,83 +438,37 @@ export const FlippableCards = ({
               ease: "easeInOut",
             }}
           >
-            <h3 className="text-lg font-bold text-black dark:text-white mb-2">
-              {testimonials[active]?.name}
+            <h3 className="text-2xl font-bold text-purple-800 mb-2">
+              {testimonials[active].name}
             </h3>
-            <p className="text-xs text-gray-500 dark:text-neutral-500 mb-3">
-              {testimonials[active]?.designation}
+            <p className="text-sm text-purple-600 mb-6">
+              {testimonials[active].designation}
             </p>
 
-            {/* Badges under title with animation */}
-            {testimonials[active]?.tags && (
-              <motion.div
-                className="flex flex-wrap gap-1 mb-3"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                {testimonials[active].tags
-                  .slice(0, 4)
-                  .map((tag: string, index: number) => (
-                    <motion.div
-                      key={tag}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2, delay: index * 0.05 }}
-                    >
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-gradient-to-r from-pink-100 to-purple-100 text-purple-700 border-purple-200"
-                      >
-                        {tag.replace("-", " ")}
-                      </Badge>
-                    </motion.div>
-                  ))}
-              </motion.div>
-            )}
-
-            <motion.p className="text-sm text-gray-500 dark:text-neutral-300 leading-relaxed">
-              {testimonials[active]?.description
-                .split(" ")
-                .map((word: string, index: number) => (
-                  <motion.span
-                    key={index}
-                    initial={{
-                      filter: "blur(10px)",
-                      opacity: 0,
-                      y: 5,
-                    }}
-                    animate={{
-                      filter: "blur(0px)",
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    transition={{
-                      duration: 0.2,
-                      ease: "easeInOut",
-                      delay: 0.02 * index,
-                    }}
-                    className="inline-block"
-                  >
-                    {word}&nbsp;
-                  </motion.span>
-                ))}
+            {/* Description with word-by-word blur animation */}
+            <motion.p
+              className="text-gray-600 text-sm leading-relaxed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <WordBlurAnimation text={testimonials[active].description} />
             </motion.p>
           </motion.div>
 
-          {/* Navigation arrows */}
-          <div className="flex gap-2 pt-4">
+          {/* Navigation buttons with more padding from description */}
+          <div className="flex gap-4 pt-20 md:pt-16">
             <Button
               onClick={handlePrev}
-              className="group/button flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
+              className="h-10 w-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 flex items-center justify-center group/button shadow-lg transition-all duration-200"
             >
-              <IconArrowLeft className="h-4 w-4 text-black transition-transform duration-300 group-hover/button:rotate-12 dark:text-neutral-400" />
+              <IconArrowLeft className="h-5 w-5 text-white group-hover/button:rotate-12 transition-transform duration-200" />
             </Button>
             <Button
               onClick={handleNext}
-              className="group/button flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
+              className="h-10 w-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 flex items-center justify-center group/button shadow-lg transition-all duration-200"
             >
-              <IconArrowRight className="h-4 w-4 text-black transition-transform duration-300 group-hover/button:-rotate-12 dark:text-neutral-400" />
+              <IconArrowRight className="h-5 w-5 text-white group-hover/button:-rotate-12 transition-transform duration-200" />
             </Button>
           </div>
         </div>

@@ -7,6 +7,7 @@ export interface Club {
   description: string;
   shortDescription: string;
   website: string;
+  logo: string; // New field for logo path
   socialLinks: {
     linktree?: string;
     website?: string;
@@ -52,7 +53,8 @@ export const clubsData: Club[] = [
       "ACM@UCI, the UC Irvine Chapter of the Association of Computer Machinery (ACM), is dedicated to advancing computing as a science and a profession. They work toward accommodating the needs of students as an investment for brilliant minds in academia and successful men and women in business. ACM's active competition participants train rigorously to compete in nationally renowned competitions, including IEEExtreme, HackerRank and ICPC. The club also evaluates and supports student project proposals.",
     shortDescription:
       "Advancing computing as a science and profession through competitions and project support.",
-    website: "https://linktr.ee/acmuci",
+    website: "https://www.acm-uci.org/",
+    logo: "/acm_logo.png", // Path to logo in public folder
     socialLinks: {
       linktree: "https://linktr.ee/acmuci",
     },
@@ -90,7 +92,8 @@ export const clubsData: Club[] = [
       "AI@UCI is to introduce students to the latest tools and concepts in AI. By providing real word examples and application based workshops, students can use these skills to navigate their own journey into the dynamic world of AI in addition to gaining in demand skills outside of the classroom.",
     shortDescription:
       "Introducing students to AI tools and concepts through practical workshops.",
-    website: "https://linktr.ee/aiatuci",
+    website: "https://aiclub.ics.uci.edu/",
+    logo: "/ai_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/aiatuci",
     },
@@ -132,7 +135,8 @@ export const clubsData: Club[] = [
       "Black in Tech is a student-run organization dedicated to empowering minority voices in tech by hosting tech talks, workshops, networking events, offering internship guidance, and providing industry exposure through partnerships with tech companies and site visits.",
     shortDescription:
       "Empowering minority voices in tech through networking and professional development.",
-    website: "https://linktr.ee/BIT_UCI",
+    website: "https://bit.ics.uci.edu/",
+    logo: "/bit_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/BIT_UCI",
     },
@@ -171,6 +175,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "Building a blockchain ecosystem through education, development, and networking.",
     website: "https://www.blockchainuci.org/",
+    logo: "/blockchain_logo.png",
     socialLinks: {
       website: "https://www.blockchainuci.org/",
     },
@@ -213,7 +218,8 @@ export const clubsData: Club[] = [
       "Commit the Change is a community service organization dedicated to working with nonprofit organizations to develop tech for social good. Students who join as members are matched with nonprofits as designers or developers and spend the entire school year creating a software application that will reduce operating costs or improve a given workflow for their nonprofit once completed. While doing so, they follow industry best practices such as version control, code reviews, and iterative design which are taught by project leads in order to prepare them for work in internships and other roles related to software development and design.",
     shortDescription:
       "Developing technology for social good through nonprofit partnerships.",
-    website: "https://linktr.ee/ctc.uci",
+    website: "https://ctc-uci.com/",
+    logo: "/ctc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/ctc.uci",
     },
@@ -251,7 +257,8 @@ export const clubsData: Club[] = [
       "Cyber@UCI was created from a desire to have more cybersecurity exposure and learning at UCI. Despite being a rapidly growing, and extremely important field, cybersecurity is often only relegated to a couple upper division classes. That just isn't right! At its core, being 'good' at cybersecurity necessitates being plugged into the security community, and keeping up to date with all the latest developments. Cyber @ UCI offers such a place, bringing people from all levels of experience together with one common interest: cybersecurity.",
     shortDescription:
       "Building a cybersecurity community for all experience levels.",
-    website: "https://linktr.ee/cyberuci",
+    website: "https://cyberuci.com/",
+    logo: "/cyber_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/cyberuci",
     },
@@ -290,7 +297,8 @@ export const clubsData: Club[] = [
       "Data@UCI aims to nurture a community of Anteaters exploring their place in an increasingly data-driven world. Through workshops, professional panels, and speaker events, we provide resources and a network for students to grow their analytical skills and gain a deeper appreciation for data — helping them to succeed in college and in their careers. We are a student-run organization ultimately dedicated to the UCI and larger Orange County communities.",
     shortDescription:
       "Nurturing a data science community through workshops and professional development.",
-    website: "https://linktr.ee/DataAtUCIrvine",
+    website: "https://www.dataatuci.com/",
+    logo: "/data_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/DataAtUCIrvine",
     },
@@ -329,6 +337,7 @@ export const clubsData: Club[] = [
     shortDescription:
       "A community for digital designers focused on UX/UI, product, and visual design.",
     website: "https://linktr.ee/designatuci",
+    logo: "/design_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/designatuci",
     },
@@ -366,7 +375,8 @@ export const clubsData: Club[] = [
       "Hack at UCI is a student-run organization established to provide students with a platform to learn, grow, and develop technology of the future. Established in 2013, our mission is to promote, educate, and enhance the community around us by giving students the platform to learn and create technology. Our organization hosts hackathons, technical workshops, career panels, and other events that bring in over 1000+ attendees in total each year. For hackathons, we organize Orange County's biggest annual hackathon, HackUCI, with 500+ students, 1600+ applicants, and 90+ projects submitted as well as ZotHacks, a beginner level hackathon with 50+ students at UCI.",
     shortDescription:
       "Organizing hackathons and tech events to promote innovation and learning.",
-    website: "https://linktr.ee/HackAtUCI",
+    website: "https://hack.ics.uci.edu/",
+    logo: "/hack_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/HackAtUCI",
     },
@@ -405,7 +415,8 @@ export const clubsData: Club[] = [
       "The official student government for the Donald Bren School of ICS, the ICS Student Council (ICSSC) seeks to improve student life of the Donald Bren School of Information and Computer Sciences academically, socially, and professionally, as well as create and deepen bonds between students, faculty, administration, companies, and alumni of the ICS School. We believe that through a strong community, we will enhance the quality of student life and ensure great jobs for students of all majors and minors within the Donald Bren School of Information and Computer Science.",
     shortDescription:
       "Official student government representing ICS students and improving their academic and professional experience.",
-    website: "https://linktr.ee/icssc.uci",
+    website: "https://studentcouncil.ics.uci.edu/",
+    logo: "/icssc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/icssc.uci",
     },
@@ -444,7 +455,8 @@ export const clubsData: Club[] = [
       "QC@UCI, a student-led organization, empowers students to explore and advance the field of quantum computation and software. Not only do members learn foundational quantum algorithms through educational seminars and hands-on workshops, but they also engage in interdisciplinary research projects that connect quantum computing to fields like machine learning and chemistry. The club fosters a vibrant quantum information science community, facilitating collaboration among students and providing them with valuable insights from industry and academic leaders through regular guest speaker events. QC@UCI equips its Anteaters with the knowledge and skills to navigate the rapidly evolving quantum computing landscape.",
     shortDescription:
       "Exploring quantum computing through education, research, and interdisciplinary collaboration.",
-    website: "https://linktr.ee/qcatuci",
+    website: "https://www.qc-uci.club/",
+    logo: "/qc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/qcatuci",
     },
@@ -482,7 +494,8 @@ export const clubsData: Club[] = [
       "VGDC supports student game developers in developing portfolios, enhancing skills, and connecting to industry professionals. VGDC provides a variety of events and programs to engage with student game developers from UCI and beyond, including quarterly student-pitched game projects, learning workshops for art, audio, game design, production, programming, UI/UX, and writing, industry speakers including Game Developer's Week, game jams, and socials.",
     shortDescription:
       "Supporting game developers through projects, workshops, and industry connections.",
-    website: "https://linktr.ee/vgdc.uci",
+    website: "https://sites.google.com/uci.edu/vgdcuci/home",
+    logo: "/vgdc_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/vgdc.uci",
     },
@@ -527,7 +540,8 @@ export const clubsData: Club[] = [
       "WICS is a social and professional nonprofit organization at UCI established to encourage women to pursue a college degree and a successful career in the computer science field. WICS provides support for women and other minorities through various activities, hosts company networking opportunities, organizes sponsored trips to the Grace Hopper Celebration, outreaches to middle and high school students, and hosts VenusHacks, UCI's women-centric hackathon. WICS is open to people of all genders.",
     shortDescription:
       "Encouraging women in computer science through mentorship, networking, and professional development.",
-    website: "https://linktr.ee/wicsuci",
+    website: "https://wics.ics.uci.edu/",
+    logo: "/wics_logo.png",
     socialLinks: {
       linktree: "https://linktr.ee/wicsuci",
     },

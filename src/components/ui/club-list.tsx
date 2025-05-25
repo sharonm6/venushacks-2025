@@ -85,11 +85,11 @@ const ClubFlippableCards = ({
   };
 
   const handleViewAllClubs = () => {
-    router.push("/clubs");
+    router.push("/all-clubs");
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col p-8">
       {/* Compact Header */}
       <div className="text-center py-4">
         <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-1">
