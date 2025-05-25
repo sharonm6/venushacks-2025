@@ -228,6 +228,10 @@ function Comment({ comment }: CommentProps) {
 
 export default function Feed({ club }: { club: Club }) {
   const userid = "jZDLVSPOI9A3xQQhwEef";
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    avatar: string;
+  }>({ name: "", avatar: "" });
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
@@ -238,7 +242,22 @@ export default function Feed({ club }: { club: Club }) {
   const [comments, setComments] = useState<CommentsType>([]);
   const [newComments, setNewComments] = useState<Record<number, string>>({});
 
+  const getUserInfo = async (posterid: string) => {
+    const profile = await indexProfile(posterid);
+
+    return {
+      name: profile ? profile.name : "Hidden User",
+      avatar: profile ? profile.picture : "/avatar0.png",
+    };
+  };
+
+  const loadUserInfo = async () => {
+    const currentUser = await getUserInfo(userid);
+    setCurrentUser(currentUser);
+  };
+
   useEffect(() => {
+    loadUserInfo();
     loadFeed();
   }, []);
 
@@ -262,15 +281,6 @@ export default function Feed({ club }: { club: Club }) {
       return `${days} day${days !== 1 ? "s" : ""} ago`;
     }
   }
-
-  const getUserInfo = async (posterid: string) => {
-    const profile = await indexProfile(posterid);
-
-    return {
-      name: profile ? profile.name : "Hidden User",
-      avatar: profile ? profile.picture : "/avatar0.png",
-    };
-  };
 
   const parseComments = (posts: Post[]) => {
     const parsedComments: CommentsType = {};
@@ -524,6 +534,10 @@ export default function Feed({ club }: { club: Club }) {
                         {/* Add Comment */}
                         <div className="flex items-start space-x-3 pt-2">
                           <Avatar className="h-8 w-8 ring-1 ring-purple-100">
+                            <AvatarImage
+                              src={currentUser.avatar || "/avatar0.png"}
+                              alt="Current User"
+                            />
                             <AvatarFallback className="bg-purple-100 text-purple-600 text-xs">
                               CU
                             </AvatarFallback>
