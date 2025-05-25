@@ -20,6 +20,7 @@ const storage = getStorage(app);
 const profilesCollection = collection(db, "profiles");
 const conversationsCollection = collection(db, "conversations");
 const messagesCollection = collection(db, "messages");
+const postsCollection = collection(db, "posts");
 
 export {
   app,
@@ -28,4 +29,5 @@ export {
   profilesCollection,
   conversationsCollection,
   messagesCollection,
+  postsCollection,
 };

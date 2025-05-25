@@ -1,10 +1,13 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, MessageCircle, Share, Send } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { index as indexPosts } from "@/services/posts";
+import { index as indexProfile } from "@/services/profiles";
+import { Post, FeedItem } from "@/lib/types";
+import { type Club } from "@/lib/clubDatabase";
 
 // Mock comments data
 const mockComments = {
@@ -197,9 +200,6 @@ function Comment({ comment }: CommentProps) {
             <span className="font-medium text-xs text-gray-900">
               {comment.user.name}
             </span>
-            <span className="text-purple-600 text-xs">
-              @{comment.user.username}
-            </span>
           </div>
           <p className="text-sm text-gray-700 leading-relaxed">
             {comment.content}
@@ -226,16 +226,81 @@ function Comment({ comment }: CommentProps) {
   );
 }
 
-export default function Feed() {
+export default function Feed({ club }: { club: Club }) {
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
-  const [postLikes, setPostLikes] = useState<Record<number, number>>(
-    feedItems.reduce((acc, item) => ({ ...acc, [item.id]: item.likes }), {})
-  );
+  const [postLikes, setPostLikes] = useState<Record<string, number>>({});
   const [expandedComments, setExpandedComments] = useState<Set<number>>(
     new Set()
   );
-  const [comments, setComments] = useState<CommentsType>(mockComments);
+  const [comments, setComments] = useState<CommentsType>([]);
   const [newComments, setNewComments] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    loadFeed();
+  }, []);
+
+  function formatTimestamp(timestamp: {
+    seconds: number;
+    nanoseconds: number;
+  }): string {
+    const now = Date.now();
+    const postTime = timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000;
+    const diffInMs = now - postTime;
+
+    const minutes = Math.floor(diffInMs / (1000 * 60));
+    const hours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const days = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+    } else if (hours < 24) {
+      return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+    } else {
+      return `${days} day${days !== 1 ? "s" : ""} ago`;
+    }
+  }
+
+  const getUserInfo = async (posterid: string) => {
+    const profile = await indexProfile(posterid);
+
+    return {
+      name: profile ? profile.name : "Hidden User",
+      avatar: profile ? profile.picture : "/avatar0.png",
+    };
+  };
+
+  const loadFeed = async () => {
+    const posts = await indexPosts(club.id);
+
+    const feedItems: FeedItem[] = await Promise.all(
+      posts.map(async (post) => ({
+        id: post.id,
+        user: (await getUserInfo(post.posterid)) || {
+          name: "Hidden User",
+          avatar: "/avatar0.png",
+        },
+        title: post.title,
+        content: post.content,
+        timestamp: formatTimestamp(post.timestamp),
+        likes: post.likes ? post.likes.split(",").length : 0,
+        comments: post.comments ? post.comments.split(",").length : 0,
+      }))
+    );
+
+    setPostLikes(
+      feedItems.reduce((acc, item) => {
+        acc[item.id] = item.likes;
+        return acc;
+      }, {} as Record<string, number>)
+    );
+
+    setFeedItems(feedItems);
+
+    console.log("Feed items loaded:", feedItems);
+  };
 
   const handleLike = (postId: number) => {
     const newLikedPosts = new Set(likedPosts);
@@ -328,9 +393,6 @@ export default function Feed() {
                       <h4 className="font-semibold text-sm text-gray-900">
                         {item.user.name}
                       </h4>
-                      <span className="text-purple-600 text-xs">
-                        @{item.user.username}
-                      </span>
                       <span className="text-gray-400 text-xs">•</span>
                       <span className="text-gray-500 text-xs">
                         {item.timestamp}

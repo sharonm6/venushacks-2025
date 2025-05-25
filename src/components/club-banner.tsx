@@ -197,7 +197,7 @@ export default function ClubBanner({ club }: ClubBannerProps) {
 
         {/* Scrollable Feed */}
         <div className="flex-1 min-h-0">
-          <Feed />
+          <Feed club={club} />
         </div>
       </section>
     </div>

@@ -53,3 +53,28 @@ export interface JoinedClub {
   avatar: string;
   joinDate: string;
 }
+
+export interface Post {
+  id: string;
+  clubid: string;
+  posterid: string;
+  title: string;
+  content: string;
+  locations: string;
+  timestamp: string;
+  likes: string;
+  comments: string;
+}
+
+export interface FeedItem {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  title: string;
+  content: string;
+  timestamp: string;
+  likes: number;
+  comments: number;
+}
