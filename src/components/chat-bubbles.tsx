@@ -1,10 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChatMessage } from "@/lib/types";
+import { useEffect, useRef } from "react";
 
 interface ChatBubblesProps {
   messages: ChatMessage[];
   userPicture?: string;
   chatUserPicture?: string;
+  isLoading?: boolean;
 }
 
 // Group messages by sender and consecutive timing
@@ -37,8 +39,28 @@ export default function ChatBubbles({
   messages,
   userPicture,
   chatUserPicture,
+  isLoading = false,
 }: ChatBubblesProps) {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messageGroups = groupMessages(messages);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollAreaRef.current && !isLoading) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <p>Loading messages...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (messages.length === 0) {
     return (
@@ -49,7 +71,10 @@ export default function ChatBubbles({
   }
 
   return (
-    <div className="flex flex-col space-y-3 p-4 w-full">
+    <div
+      ref={scrollAreaRef}
+      className="flex flex-col space-y-3 p-4 w-full h-full max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+    >
       {messageGroups.map((group, groupIndex) => (
         <div
           key={`group-${groupIndex}`}
