@@ -1,23 +1,13 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// Define types for better type safety
-export interface Message {
-  id: number;
-  senderId: string;
-  senderName: string;
-  senderAvatar: string;
-  message: string;
-  timestamp: string;
-  isCurrentUser: boolean;
-}
+import { ChatMessage } from "@/lib/types";
 
 interface ChatBubblesProps {
-  messages: Message[];
+  messages: ChatMessage[];
   currentUserId: string;
 }
 
 // Group messages by sender and consecutive timing
-const groupMessages = (messages: Message[]) => {
+const groupMessages = (messages: ChatMessage[]) => {
   const groups = [];
   let currentGroup = null;
 

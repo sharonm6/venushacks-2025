@@ -1,17 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-
-// Define types for better type safety
-export interface Chat {
-  id: number;
-  userId: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
-  isOnline: boolean;
-}
+import { Chat } from "@/lib/types";
 
 interface ChatListProps {
   chats: Chat[];

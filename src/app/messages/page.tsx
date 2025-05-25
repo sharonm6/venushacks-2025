@@ -1,7 +1,7 @@
 "use client";
 
-import ChatBubbles, { Message } from "@/components/chat-bubbles";
-import ChatList, { Chat } from "@/components/chat-list";
+import ChatBubbles from "@/components/chat-bubbles";
+import ChatList from "@/components/chat-list";
 import MeetVerification from "@/components/meet-verification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,109 +14,198 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Send, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-// Mock data - this would come from your backend
-const mockChats: Chat[] = [
-  {
-    id: 1,
-    userId: "user1",
-    name: "Sarah Chen",
-    avatar: "https://via.placeholder.com/40",
-    lastMessage: "Perfect! Let's meet at 2:30",
-    timestamp: "10:42 AM",
-    unreadCount: 2,
-    isOnline: true,
-  },
-  {
-    id: 2,
-    userId: "user2",
-    name: "Emily Rodriguez",
-    avatar: "https://via.placeholder.com/40",
-    lastMessage: "Thanks for the help with the project!",
-    timestamp: "Yesterday",
-    unreadCount: 0,
-    isOnline: false,
-  },
-  {
-    id: 3,
-    userId: "user3",
-    name: "Jessica Kim",
-    avatar: "https://via.placeholder.com/40",
-    lastMessage: "See you at the meeting tomorrow",
-    timestamp: "Yesterday",
-    unreadCount: 1,
-    isOnline: true,
-  },
-];
+import { index as indexConversations } from "@/services/conversations";
+import { index as indexProfiles } from "@/services/profiles";
+import { index as indexMessages } from "@/services/messages";
 
-const mockMessages: Record<number, Message[]> = {
-  1: [
-    {
-      id: 1,
-      senderId: "user1",
-      senderName: "Sarah Chen",
-      senderAvatar: "https://via.placeholder.com/40",
-      message: "Hey! How's the project going?",
-      timestamp: "10:30 AM",
-      isCurrentUser: false,
-    },
-    {
-      id: 2,
-      senderId: "user1",
-      senderName: "Sarah Chen",
-      senderAvatar: "https://via.placeholder.com/40",
-      message: "I finished the frontend mockups",
-      timestamp: "10:31 AM",
-      isCurrentUser: false,
-    },
-    {
-      id: 3,
-      senderId: "currentUser",
-      senderName: "You",
-      senderAvatar: "https://via.placeholder.com/40",
-      message: "Looks great! I love the color scheme",
-      timestamp: "10:35 AM",
-      isCurrentUser: true,
-    },
-  ],
-  2: [
-    {
-      id: 4,
-      senderId: "user2",
-      senderName: "Emily Rodriguez",
-      senderAvatar: "https://via.placeholder.com/40",
-      message: "Thanks for the help with the project!",
-      timestamp: "Yesterday",
-      isCurrentUser: false,
-    },
-  ],
-  3: [
-    {
-      id: 5,
-      senderId: "user3",
-      senderName: "Jessica Kim",
-      senderAvatar: "https://via.placeholder.com/40",
-      message: "See you at the meeting tomorrow",
-      timestamp: "Yesterday",
-      isCurrentUser: false,
-    },
-  ],
-};
+import { Chat, Conversation, ChatMessage } from "@/lib/types";
+import { messagesCollection } from "@/utils/firebase.browser";
+import { query, where, orderBy } from "firebase/firestore";
+
+// const mockMessages: Record<number, Message[]> = {
+//   1: [
+//     {
+//       id: 1,
+//       senderId: "user1",
+//       senderName: "Sarah Chen",
+//       senderAvatar: "https://via.placeholder.com/40",
+//       message: "Hey! How's the project going?",
+//       timestamp: "10:30 AM",
+//       isCurrentUser: false,
+//     },
+//     {
+//       id: 2,
+//       senderId: "user1",
+//       senderName: "Sarah Chen",
+//       senderAvatar: "https://via.placeholder.com/40",
+//       message: "I finished the frontend mockups",
+//       timestamp: "10:31 AM",
+//       isCurrentUser: false,
+//     },
+//     {
+//       id: 3,
+//       senderId: "currentUser",
+//       senderName: "You",
+//       senderAvatar: "https://via.placeholder.com/40",
+//       message: "Looks great! I love the color scheme",
+//       timestamp: "10:35 AM",
+//       isCurrentUser: true,
+//     },
+//   ],
+//   2: [
+//     {
+//       id: 4,
+//       senderId: "user2",
+//       senderName: "Emily Rodriguez",
+//       senderAvatar: "https://via.placeholder.com/40",
+//       message: "Thanks for the help with the project!",
+//       timestamp: "Yesterday",
+//       isCurrentUser: false,
+//     },
+//   ],
+//   3: [
+//     {
+//       id: 5,
+//       senderId: "user3",
+//       senderName: "Jessica Kim",
+//       senderAvatar: "https://via.placeholder.com/40",
+//       message: "See you at the meeting tomorrow",
+//       timestamp: "Yesterday",
+//       isCurrentUser: false,
+//     },
+//   ],
+// };
 
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  // const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [userName, setUserName] = useState<string>("");
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [showMeetVerification, setShowMeetVerification] = useState(false);
-  const currentUserId = "currentUser"; // This would come from your auth system
+  const currentUserId = "9SDq83UWnqdtcUFKeYUZ"; // This would come from your auth system
+
+  const loadUserProfile = async (chatUserId: string) => {
+    const profiles = await indexProfiles();
+    const chatUserProfile = profiles.find(
+      (profile) => profile.id === chatUserId
+    );
+
+    return chatUserProfile || null;
+  };
+
+  const loadConversations = async () => {
+    const conversations = await indexConversations();
+
+    // setConversations(conversations);
+    return conversations;
+  };
+
+  const loadChatMessageInfo = async (conversation: Conversation) => {
+    const chatMessages = await indexMessages(
+      query(
+        messagesCollection,
+        where("conversationid", "==", conversation.id),
+        orderBy("timestamp", "desc")
+      )
+    );
+
+    const lastChatMessage = chatMessages[0];
+
+    return chatMessages.length > 0
+      ? {
+          lastMessage: lastChatMessage.content,
+          timestamp: new Date(
+            lastChatMessage.timestamp.seconds * 1000
+          ).toLocaleDateString(),
+        }
+      : {
+          lastMessage: "",
+          timestamp: Date.now(),
+        };
+  };
+
+  const loadChats = async () => {
+    const conversations = await loadConversations();
+
+    const chats = await Promise.all(
+      conversations.map(async (conversation, idx) => {
+        const chatUserId =
+          conversation.useridA === currentUserId
+            ? conversation.useridB
+            : conversation.useridA;
+
+        const chatUserProfile = await loadUserProfile(chatUserId);
+        const userProfile = await loadUserProfile(currentUserId);
+
+        if (!chatUserProfile && !userProfile) {
+          return null; // Skip if profiles not found
+        }
+
+        setUserName(userProfile!.name);
+
+        const chatMessageInfo = await loadChatMessageInfo(conversation);
+
+        return {
+          id: idx,
+          conversationid: conversation.id,
+          userId: chatUserId,
+          name: chatUserProfile.name,
+          avatar: "avatar",
+          lastMessage: chatMessageInfo.lastMessage,
+          timestamp: chatMessageInfo.timestamp,
+        };
+      })
+    );
+
+    setChats(chats.filter((chat) => chat !== null));
+
+    // console.log("CONVERSATIONS", conversations);
+    console.log("CHATS", chats);
+  };
+
+  useEffect(() => {
+    loadChats();
+  }, []);
+
+  const loadChatMessages = async (
+    conversationid: string,
+    chatUserName: string
+  ) => {
+    const chatMessages = await indexMessages(
+      query(
+        messagesCollection,
+        where("conversationid", "==", conversationid),
+        orderBy("timestamp", "desc")
+      )
+    );
+
+    setChatMessages(
+      chatMessages.map((chatMessage) => ({
+        id: chatMessage.id,
+        senderId: chatMessage.senderid,
+        senderName:
+          chatMessage.senderid === currentUserId ? userName : chatUserName,
+        senderAvatar: "https://via.placeholder.com/40",
+        message: chatMessage.content,
+        timestamp: new Date(
+          chatMessage.timestamp.seconds * 1000
+        ).toLocaleTimeString(navigator.language, {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        isCurrentUser: chatMessage.senderid === currentUserId,
+      }))
+    );
+  };
 
   const handleChatSelect = (chat: Chat) => {
+    loadChatMessages(chat.conversationid, chat.name);
     setSelectedChat(chat);
     setShowMeetVerification(false); // Close meet verification when switching chats
   };
-
-  const currentMessages = selectedChat
-    ? mockMessages[selectedChat.id] || []
-    : [];
 
   return (
     <div className="h-screen w-full p-4">
@@ -129,7 +218,7 @@ export default function MessagesPage() {
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto">
             <ChatList
-              chats={mockChats}
+              chats={chats}
               selectedChatId={selectedChat?.id}
               onChatSelect={handleChatSelect}
             />
@@ -145,9 +234,7 @@ export default function MessagesPage() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <div>
                     <CardTitle>{selectedChat.name}</CardTitle>
-                    <CardDescription>
-                      {selectedChat.isOnline ? "Online" : "Offline"}
-                    </CardDescription>
+                    {/* <CardDescription></CardDescription> */}
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -175,7 +262,7 @@ export default function MessagesPage() {
               <Card className="flex-1 flex flex-col">
                 <CardContent className="flex-1 overflow-y-auto p-0">
                   <ChatBubbles
-                    messages={currentMessages}
+                    messages={chatMessages}
                     currentUserId={currentUserId}
                   />
                 </CardContent>
