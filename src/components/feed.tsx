@@ -101,10 +101,73 @@ function Comment({ comment }: { comment: Comment }) {
   );
 }
 
+// SHARON - new db structure
 interface NewPostData {
   title: string;
   content: string;
+  meetupLocations: {
+    acc: string[];
+    campus: string[];
+  };
 }
+
+const ACC_LOCATIONS = [
+  {
+    id: "PV",
+    name: "PV (Balls)",
+    address: "41 Arroyo Dr, Irvine, CA 92617",
+  },
+
+  {
+    id: "CDS",
+    name: "CDS (Lodge)",
+    address: "33000 Arroyo Dr, Irvine, CA 92617",
+  },
+  {
+    id: "VDC",
+    name: "VDC (Community Center)",
+    address: "62600 Arroyo Dr, Irvine, CA 92617",
+  },
+  {
+    id: "VDCN",
+    name: "VDCN (Clubhouse)",
+    address: "28700 Arroyo Dr, Irvine, CA 92617",
+  },
+  {
+    id: "PDS",
+    name: "PDS (Community Center)",
+    address: "10000 Adobe Cir Rd, Irvine, CA 92617",
+  },
+];
+
+const CAMPUS_LOCATIONS = [
+  {
+    id: "DBH",
+    name: "Donald Bren Hall",
+    address: "Donald Bren Hall, Irvine, CA 92697",
+  },
+  {
+    id: "ALP",
+    name: "Anteater Learning Pavilion",
+    address: "Aldrich Park, Irvine, CA 92697",
+  },
+  {
+    id: "Brandywine",
+    name: "Brandywine",
+    address: "557 E Peltason Dr, Irvine, CA 92617",
+  },
+  {
+    id: "Flagpoles",
+    name: "Flagpoles",
+    address: "Bus Loop, Irvine, CA 92612",
+  },
+  {
+    id: "SciLib",
+    name: "Science Library",
+    address:
+      "Ayala Science Library, Receiving Dock Bldg. 520, Irvine, CA 92697",
+  },
+];
 
 export default function Feed({ club }: { club: Club }) {
   const userid = "jZDLVSPOI9A3xQQhwEef";
@@ -128,6 +191,10 @@ export default function Feed({ club }: { club: Club }) {
   const [newPost, setNewPost] = useState<NewPostData>({
     title: "",
     content: "",
+    meetupLocations: {
+      acc: [],
+      campus: [],
+    },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -385,39 +452,97 @@ export default function Feed({ club }: { club: Club }) {
     setIsSubmitting(true);
 
     try {
-      // Create new post object
+      // Include meetup locations in the post creation
       const createdPost = {
-        id: Date.now(), // In real app, this would come from the backend
+        id: Date.now(),
         user: {
-          name: "Current User", // Replace with actual user data
-          avatar: "https://via.placeholder.com/40",
-          username: "current.user",
+          name: currentUser.name || "Current User",
+          avatar: currentUser.avatar || "/avatar0.png",
+          username: currentUser.id || "current.user",
         },
         title: newPost.title.trim(),
         content: newPost.content.trim(),
+        meetupLocations: newPost.meetupLocations,
         timestamp: "Just now",
         likes: 0,
         comments: 0,
       };
 
-      // Add to the beginning of posts array
-      setPosts((prev) => [createdPost, ...prev]);
-
-      // Update post likes state for the new post
-      setPostLikes((prev) => ({ ...prev, [createdPost.id]: 0 }));
-
       // Reset form and close dialog
-      setNewPost({ title: "", content: "" });
+      setNewPost({
+        title: "",
+        content: "",
+        meetupLocations: { acc: [], campus: [] },
+      });
       setIsCreatePostOpen(false);
 
-      // TODO: make API call to create post
+      // TODO: make API call to create post with meetup data
       // await createPost(newPost);
     } catch (error) {
       console.error("Error creating post:", error);
-      // TODO: Handle error (show toast, etc.)
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Add function to generate Google Maps URL
+  const generateMapsUrl = () => {
+    const allSelectedLocations = [
+      ...newPost.meetupLocations.acc.map(
+        (id) => ACC_LOCATIONS.find((loc) => loc.id === id)?.address
+      ),
+      ...newPost.meetupLocations.campus.map(
+        (id) => CAMPUS_LOCATIONS.find((loc) => loc.id === id)?.address
+      ),
+    ].filter(Boolean);
+
+    if (allSelectedLocations.length === 0) return "";
+
+    if (allSelectedLocations.length === 1) {
+      // Single location - just search for it
+      return `https://www.google.com/maps/search/${encodeURIComponent(
+        allSelectedLocations[0] || ""
+      )}`;
+    }
+
+    // Multiple locations - create directions between them
+    const baseUrl = "https://www.google.com/maps/dir/";
+    const encodedLocations = allSelectedLocations.map((addr) =>
+      encodeURIComponent(addr || "")
+    );
+
+    // Join all locations with '/' as seen in your example
+    const directionsUrl = `${baseUrl}${encodedLocations.join("/")}`;
+
+    return directionsUrl;
+  };
+  const copyMapsUrl = async () => {
+    const url = generateMapsUrl();
+    if (url) {
+      try {
+        await navigator.clipboard.writeText(url);
+        // You could add a toast notification here
+        alert("Maps link copied to clipboard!");
+      } catch (err) {
+        console.error("Failed to copy: ", err);
+      }
+    }
+  };
+
+  const handleLocationChange = (
+    type: "acc" | "campus",
+    locationId: string,
+    checked: boolean
+  ) => {
+    setNewPost((prev) => ({
+      ...prev,
+      meetupLocations: {
+        ...prev.meetupLocations,
+        [type]: checked
+          ? [...prev.meetupLocations[type], locationId]
+          : prev.meetupLocations[type].filter((id) => id !== locationId),
+      },
+    }));
   };
 
   return (
@@ -437,7 +562,7 @@ export default function Feed({ club }: { club: Club }) {
                 Create Post
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold text-purple-700">
                   Create New Post
@@ -447,7 +572,8 @@ export default function Feed({ club }: { club: Club }) {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4 py-4">
+              <div className="space-y-6 py-4">
+                {/* Title */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
                     Post Title
@@ -462,6 +588,7 @@ export default function Feed({ club }: { club: Club }) {
                   />
                 </div>
 
+                {/* Content */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
                     Content
@@ -479,6 +606,132 @@ export default function Feed({ club }: { club: Club }) {
                   />
                 </div>
 
+                {/* Meet Up Section */}
+                <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-purple-700">
+                      🏠 Meet Up Locations
+                    </h3>
+                    {(newPost.meetupLocations.acc.length > 0 ||
+                      newPost.meetupLocations.campus.length > 0) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={copyMapsUrl}
+                        className="text-xs border-purple-300 text-purple-600 hover:bg-purple-100"
+                      >
+                        📍 Copy Maps Link
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Select all locations where you're willing to meet up
+                    (optional)
+                  </p>
+
+                  {/* ACC Locations */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-gray-700">
+                      🏠 ACC Housing
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ACC_LOCATIONS.map((location) => (
+                        <label
+                          key={location.id}
+                          className="flex items-center space-x-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={newPost.meetupLocations.acc.includes(
+                              location.id
+                            )}
+                            onChange={(e) =>
+                              handleLocationChange(
+                                "acc",
+                                location.id,
+                                e.target.checked
+                              )
+                            }
+                            className="rounded border-purple-300 text-purple-600 focus:ring-purple-300"
+                          />
+                          <span className="text-gray-700">{location.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Campus Locations */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-gray-700">
+                      🎓 Campus Locations
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {CAMPUS_LOCATIONS.map((location) => (
+                        <label
+                          key={location.id}
+                          className="flex items-center space-x-2 text-sm cursor-pointer hover:bg-white/50 p-2 rounded"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={newPost.meetupLocations.campus.includes(
+                              location.id
+                            )}
+                            onChange={(e) =>
+                              handleLocationChange(
+                                "campus",
+                                location.id,
+                                e.target.checked
+                              )
+                            }
+                            className="rounded border-purple-300 text-purple-600 focus:ring-purple-300"
+                          />
+                          <span className="text-gray-700">{location.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Selected locations preview */}
+                  {(newPost.meetupLocations.acc.length > 0 ||
+                    newPost.meetupLocations.campus.length > 0) && (
+                    <div className="mt-3 p-3 bg-white rounded border border-purple-200">
+                      <p className="text-xs text-gray-600 mb-2">
+                        Selected meetup locations:
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {newPost.meetupLocations.acc.map((id) => {
+                          const location = ACC_LOCATIONS.find(
+                            (loc) => loc.id === id
+                          );
+                          return (
+                            <span
+                              key={id}
+                              className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded"
+                            >
+                              🏠 {location?.name}
+                            </span>
+                          );
+                        })}
+                        {newPost.meetupLocations.campus.map((id) => {
+                          const location = CAMPUS_LOCATIONS.find(
+                            (loc) => loc.id === id
+                          );
+                          return (
+                            <span
+                              key={id}
+                              className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded"
+                            >
+                              🎓 {location?.name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Character counts */}
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <span>{newPost.title.length}/100 characters for title</span>
                   <span>
@@ -491,7 +744,11 @@ export default function Feed({ club }: { club: Club }) {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setNewPost({ title: "", content: "" });
+                    setNewPost({
+                      title: "",
+                      content: "",
+                      meetupLocations: { acc: [], campus: [] },
+                    });
                     setIsCreatePostOpen(false);
                   }}
                   disabled={isSubmitting}
