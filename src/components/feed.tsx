@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, MessageCircle, Share, Send } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Mock comments data
 const mockComments = {
@@ -171,6 +172,7 @@ interface CommentProps {
 type CommentsType = Record<number, Comment[]>;
 
 function Comment({ comment }: CommentProps) {
+  const router = useRouter();
   const [liked, setLiked] = useState(false);
   const [commentLikes, setCommentLikes] = useState(comment.likes);
 
@@ -179,9 +181,16 @@ function Comment({ comment }: CommentProps) {
     setCommentLikes((prev) => (liked ? prev - 1 : prev + 1));
   };
 
+  const handleUserClick = () => {
+    router.push(`/profile/${comment.user.username}`);
+  };
+
   return (
     <div className="flex items-start space-x-3 py-2">
-      <Avatar className="h-8 w-8 ring-1 ring-purple-100">
+      <Avatar
+        className="h-8 w-8 ring-1 ring-purple-100 cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all duration-200"
+        onClick={handleUserClick}
+      >
         <AvatarImage src={comment.user.avatar} alt={comment.user.name} />
         <AvatarFallback className="bg-purple-50 text-purple-600 text-xs">
           {comment.user.name
@@ -194,10 +203,16 @@ function Comment({ comment }: CommentProps) {
       <div className="flex-1 space-y-1">
         <div className="bg-gray-50 rounded-lg px-3 py-2">
           <div className="flex items-center space-x-2 mb-1">
-            <span className="font-medium text-xs text-gray-900">
+            <span
+              className="font-medium text-xs text-gray-900 cursor-pointer hover:text-purple-600 transition-colors duration-200"
+              onClick={handleUserClick}
+            >
               {comment.user.name}
             </span>
-            <span className="text-purple-600 text-xs">
+            <span
+              className="text-purple-600 text-xs cursor-pointer hover:text-purple-800 transition-colors duration-200"
+              onClick={handleUserClick}
+            >
               @{comment.user.username}
             </span>
           </div>
@@ -217,9 +232,6 @@ function Comment({ comment }: CommentProps) {
             <Heart className={`h-3 w-3 ${liked ? "fill-current" : ""}`} />
             <span>{commentLikes}</span>
           </button>
-          <button className="text-xs text-gray-500 hover:text-purple-600 transition-colors">
-            Reply
-          </button>
         </div>
       </div>
     </div>
@@ -227,6 +239,7 @@ function Comment({ comment }: CommentProps) {
 }
 
 export default function Feed() {
+  const router = useRouter();
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [postLikes, setPostLikes] = useState<Record<number, number>>(
     feedItems.reduce((acc, item) => ({ ...acc, [item.id]: item.likes }), {})
@@ -297,6 +310,10 @@ export default function Feed() {
     }
   };
 
+  const handleUserClick = (username: string) => {
+    router.push(`/profile/${username}`);
+  };
+
   return (
     <Card className="w-full h-full bg-white/90 backdrop-blur-sm border-2 border-venus-200 shadow-lg flex flex-col">
       <CardHeader className="flex-shrink-0 pb-3">
@@ -312,7 +329,10 @@ export default function Feed() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start space-x-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-purple-100">
+                  <Avatar
+                    className="h-10 w-10 ring-2 ring-purple-100 cursor-pointer hover:ring-purple-300 transition-all duration-200"
+                    onClick={() => handleUserClick(item.user.username)}
+                  >
                     <AvatarImage src={item.user.avatar} alt={item.user.name} />
                     <AvatarFallback className="bg-purple-100 text-purple-700 text-xs font-medium">
                       {item.user.name
@@ -325,10 +345,16 @@ export default function Feed() {
                   <div className="flex-1 space-y-2 min-w-0">
                     {/* User info and timestamp */}
                     <div className="flex items-center space-x-2 flex-wrap">
-                      <h4 className="font-semibold text-sm text-gray-900">
+                      <h4
+                        className="font-semibold text-sm text-gray-900 cursor-pointer hover:text-purple-600 transition-colors duration-200"
+                        onClick={() => handleUserClick(item.user.username)}
+                      >
                         {item.user.name}
                       </h4>
-                      <span className="text-purple-600 text-xs">
+                      <span
+                        className="text-purple-600 text-xs cursor-pointer hover:text-purple-800 transition-colors duration-200"
+                        onClick={() => handleUserClick(item.user.username)}
+                      >
                         @{item.user.username}
                       </span>
                       <span className="text-gray-400 text-xs">•</span>
