@@ -1,6 +1,13 @@
 export interface Profile {
   id: string;
+  picture: string;
   name: string;
+  pronouns: string;
+  year: string;
+  major: string;
+  bio: string;
+  isHidden: boolean;
+  clubs: string;
 }
 
 export interface Conversation {
@@ -37,4 +44,12 @@ export interface ChatMessage {
   message: string;
   timestamp: string;
   isCurrentUser: boolean;
+}
+
+export interface JoinedClub {
+  id: string;
+  name: string;
+  category: string;
+  avatar: string;
+  joinDate: string;
 }
