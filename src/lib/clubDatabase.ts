@@ -446,7 +446,7 @@ export const clubsData: Club[] = [
     ],
   },
   {
-    id: "quantum",
+    id: "qc",
     name: "QC @ UCI",
     fullName: "Quantum Computing @ UCI",
     category: "Quantum Computing",
