@@ -21,18 +21,31 @@ import { index as indexProfiles } from "@/services/profiles";
 import { index as indexMessages } from "@/services/messages";
 
 import { Chat, Conversation, ChatMessage } from "@/lib/types";
-import { messagesCollection } from "@/utils/firebase.browser";
-import { query, where, orderBy, addDoc } from "firebase/firestore";
+import {
+  conversationsCollection,
+  messagesCollection,
+} from "@/utils/firebase.browser";
+import {
+  query,
+  where,
+  orderBy,
+  addDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 
 export default function MessagesPage() {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  // const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [userName, setUserName] = useState<string>("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [messageToSend, setMessageToSend] = useState<string>("");
 
+  const [agreedA, setAgreedA] = useState(false);
+  const [agreedB, setAgreedB] = useState(false);
   const [showMeetVerification, setShowMeetVerification] = useState(false);
+
   const currentUserId = "9SDq83UWnqdtcUFKeYUZ"; // This would come from your auth system
 
   const loadUserProfile = async (chatUserId: string) => {
@@ -47,7 +60,7 @@ export default function MessagesPage() {
   const loadConversations = async () => {
     const conversations = await indexConversations();
 
-    // setConversations(conversations);
+    setConversations(conversations);
     return conversations;
   };
 
@@ -150,6 +163,14 @@ export default function MessagesPage() {
   };
 
   const handleChatSelect = (chat: Chat) => {
+    const selectedConversation = conversations.find(
+      (conversation) => conversation.id === chat.conversationid
+    );
+    if (selectedConversation) {
+      setAgreedA(selectedConversation.agreedA);
+      setAgreedB(selectedConversation.agreedB);
+    }
+
     loadChatMessages(chat.conversationid, chat.name);
     setSelectedChat(chat);
     setShowMeetVerification(false); // Close meet verification when switching chats
@@ -186,6 +207,17 @@ export default function MessagesPage() {
     });
 
     setSelectedChat(updatedChat);
+  };
+
+  const handleMeetReady = async (agreedA: boolean) => {
+    const conversationRef = doc(
+      conversationsCollection,
+      selectedChat?.conversationid || ""
+    );
+
+    await updateDoc(conversationRef, {
+      agreedA: agreedA,
+    });
   };
 
   return (
@@ -234,7 +266,11 @@ export default function MessagesPage() {
                 {/* Meet Verification Section */}
                 {showMeetVerification && (
                   <CardContent className="pt-0">
-                    <MeetVerification />
+                    <MeetVerification
+                      agreedA={agreedA || false}
+                      agreedB={agreedB || false}
+                      handleMeetReady={handleMeetReady}
+                    />
                   </CardContent>
                 )}
               </Card>
