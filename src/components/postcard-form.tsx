@@ -73,6 +73,8 @@ export default function ClubPostcard() {
     const profile = await index(userid);
     const matches = await indexMatches(userid);
 
+    console.log("matches:", matches);
+
     if (profile?.clubs) {
       const joinedClubs =
         profile.clubs.split(",").map((club) => club.split("(")[0]) || [];
