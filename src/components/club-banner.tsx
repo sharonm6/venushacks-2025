@@ -19,15 +19,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ExternalLink, Check, UserMinus } from "lucide-react";
+import {
+  ExternalLink,
+  Check,
+  UserMinus,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import Feed from "@/components/feed";
 import { type Club } from "@/lib/clubDatabase";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface ClubBannerProps {
   club: Club;
-  initialJoinStatus?: boolean; // Pass this from parent component based on user's current clubs
+  initialJoinStatus?: boolean;
 }
 
 export default function ClubBanner({
@@ -39,6 +45,16 @@ export default function ClubBanner({
   const [isLoading, setIsLoading] = useState(false);
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
   const [skillsExpanded, setSkillsExpanded] = useState(false);
+  const [bannerExpanded, setBannerExpanded] = useState(true);
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Calculate content height for smooth animation
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [club, activitiesExpanded, skillsExpanded]);
 
   // Helper function to get club image
   const getClubImage = (clubId: string): string => {
@@ -150,10 +166,6 @@ export default function ClubBanner({
               </div>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                Create Post
-              </Button>
-
               {/* Join/Leave Club Button */}
               {!isJoined ? (
                 <Button
@@ -207,7 +219,7 @@ export default function ClubBanner({
           </CardHeader>
 
           <CardContent className="space-y-3 pt-0">
-            {/* About Section */}
+            {/* About Section - Always visible */}
             <div>
               <h3 className="font-semibold text-base mb-2">About</h3>
               <p className="text-gray-700 text-xs leading-relaxed line-clamp-3">
@@ -215,118 +227,173 @@ export default function ClubBanner({
               </p>
             </div>
 
-            {/* Club Details */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-medium text-sm mb-1">Time Commitment</h4>
-                <p className="text-xs text-gray-600">{club.timeCommitment}</p>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm mb-1">Membership Level</h4>
-                <p className="text-xs text-gray-600">{club.membershipLevel}</p>
-              </div>
-            </div>
-
-            {/* Key Activities */}
-            <div>
-              <h3 className="font-semibold text-base mb-2">Key Activities</h3>
-              <div className="flex flex-wrap gap-1">
-                {(activitiesExpanded
-                  ? club.activities
-                  : club.activities.slice(0, 4)
-                ).map((activity, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs"
-                  >
-                    {activity}
-                  </span>
-                ))}
-                {club.activities.length > 4 && (
-                  <button
-                    onClick={() => setActivitiesExpanded(!activitiesExpanded)}
-                    className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-md text-xs transition-colors cursor-pointer"
-                  >
-                    {activitiesExpanded
-                      ? "Show less"
-                      : `+${club.activities.length - 4} more`}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Skills Offered */}
-            <div>
-              <h3 className="font-semibold text-base mb-2">
-                Skills You'll Gain
-              </h3>
-              <div className="flex flex-wrap gap-1">
-                {(skillsExpanded
-                  ? club.skillsOffered
-                  : club.skillsOffered.slice(0, 4)
-                ).map((skill, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-pink-100 text-pink-700 rounded-md text-xs"
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {club.skillsOffered.length > 4 && (
-                  <button
-                    onClick={() => setSkillsExpanded(!skillsExpanded)}
-                    className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-md text-xs transition-colors cursor-pointer"
-                  >
-                    {skillsExpanded
-                      ? "Show less"
-                      : `+${club.skillsOffered.length - 4} more`}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Important Links */}
-            {Object.keys(socialLinks).length > 0 && (
-              <div>
-                <h3 className="font-semibold text-base mb-2">
-                  Important Links
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(socialLinks).map(([platform, url]) => (
-                    <a
-                      key={platform}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded-md text-blue-700 text-xs transition-colors"
-                    >
-                      {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  ))}
+            {/* Collapsible Content */}
+            <div
+              ref={contentRef}
+              className="overflow-hidden transition-all duration-700 ease-in-out"
+              style={{
+                height: bannerExpanded ? `${contentHeight}px` : "0px",
+                opacity: bannerExpanded ? 1 : 0,
+              }}
+            >
+              <div className="space-y-3 pb-3">
+                {/* Club Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-sm mb-1">
+                      Time Commitment
+                    </h4>
+                    <p className="text-xs text-gray-600">
+                      {club.timeCommitment}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-sm mb-1">
+                      Membership Level
+                    </h4>
+                    <p className="text-xs text-gray-600">
+                      {club.membershipLevel}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Key Programs */}
-            {club.keyPrograms.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-base mb-2">Key Programs</h3>
-                <div className="space-y-1">
-                  {club.keyPrograms.map((program, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full"></div>
-                      <span className="text-xs text-gray-700">{program}</span>
+                {/* Key Activities */}
+                <div>
+                  <h3 className="font-semibold text-base mb-2">
+                    Key Activities
+                  </h3>
+                  <div className="flex flex-wrap gap-1">
+                    {(activitiesExpanded
+                      ? club.activities
+                      : club.activities.slice(0, 4)
+                    ).map((activity, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs"
+                      >
+                        {activity}
+                      </span>
+                    ))}
+                    {club.activities.length > 4 && (
+                      <button
+                        onClick={() =>
+                          setActivitiesExpanded(!activitiesExpanded)
+                        }
+                        className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-md text-xs transition-colors cursor-pointer"
+                      >
+                        {activitiesExpanded
+                          ? "Show less"
+                          : `+${club.activities.length - 4} more`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Skills Offered */}
+                <div>
+                  <h3 className="font-semibold text-base mb-2">
+                    Skills You'll Gain
+                  </h3>
+                  <div className="flex flex-wrap gap-1">
+                    {(skillsExpanded
+                      ? club.skillsOffered
+                      : club.skillsOffered.slice(0, 4)
+                    ).map((skill, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-pink-100 text-pink-700 rounded-md text-xs"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                    {club.skillsOffered.length > 4 && (
+                      <button
+                        onClick={() => setSkillsExpanded(!skillsExpanded)}
+                        className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-md text-xs transition-colors cursor-pointer"
+                      >
+                        {skillsExpanded
+                          ? "Show less"
+                          : `+${club.skillsOffered.length - 4} more`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Important Links */}
+                {Object.keys(socialLinks).length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-base mb-2">
+                      Important Links
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(socialLinks).map(([platform, url]) => (
+                        <a
+                          key={platform}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded-md text-blue-700 text-xs transition-colors"
+                        >
+                          {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {/* Key Programs */}
+                {club.keyPrograms.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-base mb-2">
+                      Key Programs
+                    </h3>
+                    <div className="space-y-1">
+                      {club.keyPrograms.map((program, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full"></div>
+                          <span className="text-xs text-gray-700">
+                            {program}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* Expand/Collapse Button */}
+            <div className="flex justify-center pt-3 border-t border-gray-100">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setBannerExpanded(!bannerExpanded)}
+                className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 transition-all duration-200"
+              >
+                {bannerExpanded ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    Show More
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         {/* Scrollable Feed */}
-        <div className="flex-1 min-h-0">
+        <div
+          className={`min-h-0 transition-all duration-700 ease-in-out ${
+            bannerExpanded ? "flex-1" : "flex-[3]"
+          }`}
+          data-feed
+        >
           <Feed />
         </div>
       </section>
