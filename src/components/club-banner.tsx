@@ -37,6 +37,8 @@ export default function ClubBanner({
   const router = useRouter();
   const [isJoined, setIsJoined] = useState(initialJoinStatus);
   const [isLoading, setIsLoading] = useState(false);
+  const [activitiesExpanded, setActivitiesExpanded] = useState(false);
+  const [skillsExpanded, setSkillsExpanded] = useState(false);
 
   // Helper function to get club image
   const getClubImage = (clubId: string): string => {
@@ -229,7 +231,10 @@ export default function ClubBanner({
             <div>
               <h3 className="font-semibold text-base mb-2">Key Activities</h3>
               <div className="flex flex-wrap gap-1">
-                {club.activities.slice(0, 4).map((activity, index) => (
+                {(activitiesExpanded
+                  ? club.activities
+                  : club.activities.slice(0, 4)
+                ).map((activity, index) => (
                   <span
                     key={index}
                     className="px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs"
@@ -238,9 +243,14 @@ export default function ClubBanner({
                   </span>
                 ))}
                 {club.activities.length > 4 && (
-                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
-                    +{club.activities.length - 4} more
-                  </span>
+                  <button
+                    onClick={() => setActivitiesExpanded(!activitiesExpanded)}
+                    className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-md text-xs transition-colors cursor-pointer"
+                  >
+                    {activitiesExpanded
+                      ? "Show less"
+                      : `+${club.activities.length - 4} more`}
+                  </button>
                 )}
               </div>
             </div>
@@ -251,7 +261,10 @@ export default function ClubBanner({
                 Skills You'll Gain
               </h3>
               <div className="flex flex-wrap gap-1">
-                {club.skillsOffered.slice(0, 4).map((skill, index) => (
+                {(skillsExpanded
+                  ? club.skillsOffered
+                  : club.skillsOffered.slice(0, 4)
+                ).map((skill, index) => (
                   <span
                     key={index}
                     className="px-2 py-1 bg-pink-100 text-pink-700 rounded-md text-xs"
@@ -260,9 +273,14 @@ export default function ClubBanner({
                   </span>
                 ))}
                 {club.skillsOffered.length > 4 && (
-                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
-                    +{club.skillsOffered.length - 4} more
-                  </span>
+                  <button
+                    onClick={() => setSkillsExpanded(!skillsExpanded)}
+                    className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-md text-xs transition-colors cursor-pointer"
+                  >
+                    {skillsExpanded
+                      ? "Show less"
+                      : `+${club.skillsOffered.length - 4} more`}
+                  </button>
                 )}
               </div>
             </div>
