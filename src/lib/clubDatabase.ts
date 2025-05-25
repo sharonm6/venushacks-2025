@@ -121,7 +121,7 @@ export const clubsData: Club[] = [
     ],
   },
   {
-    id: "blackInTech",
+    id: "bit",
     name: "Black in Tech",
     fullName: "Black in Tech @ UCI",
     category: "Diversity & Inclusion",

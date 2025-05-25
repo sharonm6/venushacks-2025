@@ -19,23 +19,15 @@ interface ClubTestimonial {
 // Function to convert Club to ClubTestimonial format
 const convertClubToTestimonial = (club: Club): ClubTestimonial => {
   // Generate a placeholder image based on club category/name
-  const getClubImage = (clubName: string): string => {
-    const imageMap: Record<string, string> = {
-      wics: "wics_logo.png",
-      hack: "hack_logo.png",
-      icssc: "icssc_logo.png",
-    };
-    return (
-      imageMap[club.id] ||
-      "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3"
-    );
+  const getClubImage = () => {
+    return club.id + "_logo.png";
   };
 
   return {
     description: club.description,
     name: club.fullName,
     designation: `${club.category} • ${club.meetingFrequency} • ${club.clubSize}`,
-    src: getClubImage(club.name),
+    src: getClubImage(),
     tags: club.tags,
     website: club.website,
     id: club.id, // Include club ID

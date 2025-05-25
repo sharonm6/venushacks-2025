@@ -112,7 +112,6 @@ const ClubFlippableCards = React.memo(
               onActiveChange={setActiveIndex}
               onVisitWebsite={handleVisitWebsite}
               onViewClubPage={handleViewClubPage}
-              setJoinedClubs={setJoinedClubs}
               joinedClubs={joinedClubs}
               setJoinedClubs={setJoinedClubs}
             />
@@ -155,16 +154,15 @@ export function AllClubsList() {
   };
 
   useEffect(() => {
-    loadJoinedClubs();
-
     // Load clubs data
     const loadClubs = async () => {
       try {
         console.log("Loading clubs from database..."); // Debug log
 
+        await loadJoinedClubs();
+
         // Get all clubs from the database
         const allClubs: Club[] = clubsDatabase.getAllClubs();
-        console.log("All clubs loaded:", allClubs.length); // Debug log
 
         // Convert clubs to testimonial format with join status
         const testimonials: ClubTestimonial[] = allClubs.map((club) => {
@@ -172,7 +170,6 @@ export function AllClubsList() {
           return convertClubToTestimonial(club, isJoined);
         });
 
-        console.log("Testimonials created:", testimonials.length); // Debug log
         setClubTestimonials(testimonials);
       } catch (error) {
         console.error("Error loading clubs:", error);

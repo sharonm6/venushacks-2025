@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Eye, Check, Plus, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { doc, updateDoc } from "firebase/firestore";
-import { profile } from "console";
 import { profilesCollection } from "@/utils/firebase.browser";
+import { index } from "@/services/profiles";
 
 type Testimonial = {
   description: string;
@@ -225,37 +225,47 @@ export const FlippableCards = ({
     [active]
   );
 
-  const handleJoinClub = useCallback((clubId: string, clubName: string) => {
-    if (!clubId) return;
+  const handleJoinClub = useCallback(
+    async (clubId: string, clubName: string) => {
+      if (!clubId) return;
 
-    // Add to joined clubs
-    setJoinedClubs((prev) => [...prev, clubId]);
-    setJustJoinedClub(clubId);
+      const now = new Date();
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const formattedDate = `${
+        monthNames[now.getMonth()]
+      } ${now.getFullYear()}`;
 
-    const now = new Date();
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    const formattedDate = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+      const profileRef = doc(profilesCollection, userid || "");
+      const profile = await index(userid);
 
-    const profileRef = doc(profilesCollection, userid || "");
-    updateDoc(profileRef, {
-      joinedClubs: joinedClubs.concat(clubId + formattedDate),
-    });
+      updateDoc(profileRef, {
+        clubs:
+          profile.clubs.length > 0
+            ? profile.clubs + "," + (clubId + "(" + formattedDate + ")")
+            : clubId + "(" + formattedDate + ")",
+      });
 
-    console.log(`Joined club: ${clubName} (ID: ${clubId})`);
-  }, []);
+      // Add to joined clubs
+      setJoinedClubs((prev) => [...prev, clubId]);
+      setJustJoinedClub(clubId);
+
+      console.log(`Joined club: ${clubName} (ID: ${clubId})`);
+    },
+    []
+  );
 
   const isClubJoined = useCallback(
     (clubId: string) => {
