@@ -1,6 +1,13 @@
 export interface Profile {
   id: string;
+  picture: string;
   name: string;
+  pronouns: string;
+  year: string;
+  major: string;
+  bio: string;
+  isHidden: boolean;
+  // joinedClubs: string;
 }
 
 export interface Conversation {

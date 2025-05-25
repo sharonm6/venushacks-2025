@@ -2,7 +2,7 @@ import { profilesCollection } from "@/utils/firebase.browser";
 import { DocumentData, Query, getDocs } from "firebase/firestore";
 import { Profile } from "@/lib/types";
 
-export async function index(query?: Query): Promise<Profile[]> {
+export async function index(userid: string, query?: Query): Promise<Profile> {
   let querySnapshot = null;
 
   if (query) {
@@ -15,5 +15,5 @@ export async function index(query?: Query): Promise<Profile[]> {
     return { ...doc.data(), id: doc.id };
   });
 
-  return localProfiles as Profile[];
+  return localProfiles.find((profile: Profile) => profile.id == userid);
 }

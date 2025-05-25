@@ -29,82 +29,93 @@ import {
   Pencil,
   Check,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { index } from "@/services/profiles";
+import { Profile } from "@/lib/types";
+import { profilesCollection } from "@/utils/firebase.browser";
+import { doc, updateDoc } from "firebase/firestore";
 
-interface JoinedClub {
-  id: number;
-  name: string;
-  category: string;
-  avatar: string;
-  joinDate: string;
-}
+// interface JoinedClub {
+//   id: number;
+//   name: string;
+//   category: string;
+//   avatar: string;
+//   joinDate: string;
+// }
 
-interface UserProfile {
-  id: string;
-  picture: string;
-  name: string;
-  pronouns: string;
-  year: string;
-  major: string;
-  bio: string;
-  isHidden: boolean;
-  joinedClubs: JoinedClub[];
-}
+// interface UserProfile {
+//   id: string;
+//   picture: string;
+//   name: string;
+//   pronouns: string;
+//   year: string;
+//   major: string;
+//   bio: string;
+//   isHidden: boolean;
+//   joinedClubs: JoinedClub[];
+// }
 
-// Available avatars in public folder
 const AVAILABLE_AVATARS = [
-  "/avatars/avatar1.svg",
-  "/avatars/avatar2.svg",
-  "/avatars/avatar3.svg",
-  "/avatars/avatar4.svg",
-  "/avatars/avatar5.svg",
-  "/avatars/avatar6.svg",
-  "/avatars/avatar7.svg",
-  "/avatars/avatar8.svg",
-  "/avatars/avatar9.svg",
-  "/avatars/avatar10.svg",
-  "/avatars/avatar11.svg",
-  "/avatars/avatar12.svg",
+  "/avatar0.png",
+  "/avatar1.png",
+  "/avatar2.png",
+  "/avatar3.png",
+  "/avatar4.png",
+  "/avatar5.png",
+  "/avatar6.png",
+  "/avatar7.png",
 ];
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile>({
-    id: "user123",
-    picture: "/avatars/avatar1.svg",
-    name: "Sharon Ma",
-    pronouns: "she/her",
-    year: "Junior",
-    major: "Computer Science",
-    bio: "Passionate about building inclusive tech communities and creating meaningful software solutions. Love hackathons, mentoring, and exploring new technologies. Always excited to connect with fellow developers and learn from diverse perspectives! 🚀",
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+
+  const [profile, setProfile] = useState<Profile>({
+    id: "",
+    picture: "",
+    name: "",
+    pronouns: "",
+    year: "",
+    major: "",
+    bio: "",
     isHidden: false,
-    joinedClubs: [
-      {
-        id: 1,
-        name: "WICS",
-        category: "Computer Science",
-        avatar: "/placeholder.svg?height=40&width=40",
-        joinDate: "September 2023",
-      },
-      {
-        id: 2,
-        name: "Hack at UCI",
-        category: "Technology",
-        avatar: "/placeholder.svg?height=40&width=40",
-        joinDate: "October 2023",
-      },
-      {
-        id: 3,
-        name: "ICS Student Council",
-        category: "Student Government",
-        avatar: "/placeholder.svg?height=40&width=40",
-        joinDate: "January 2024",
-      },
-    ],
+    // joinedClubs: [
+    //   {
+    //     id: 1,
+    //     name: "WICS",
+    //     category: "Computer Science",
+    //     avatar: "/placeholder.svg?height=40&width=40",
+    //     joinDate: "September 2023",
+    //   },
+    //   {
+    //     id: 2,
+    //     name: "Hack at UCI",
+    //     category: "Technology",
+    //     avatar: "/placeholder.svg?height=40&width=40",
+    //     joinDate: "October 2023",
+    //   },
+    //   {
+    //     id: 3,
+    //     name: "ICS Student Council",
+    //     category: "Student Government",
+    //     avatar: "/placeholder.svg?height=40&width=40",
+    //     joinDate: "January 2024",
+    //   },
+    // ],
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+
+  useEffect(() => {
+    loadProfiles();
+  }, []);
+
+  const loadProfiles = async () => {
+    const profile = await index(userid);
+
+    setProfile(profile);
+  };
 
   const toggleVisibility = () => {
     setProfile((prev) => ({ ...prev, isHidden: !prev.isHidden }));
@@ -115,7 +126,22 @@ export default function ProfilePage() {
     setIsEditing(true);
   };
 
+  const handleSaveWrite = async (editedProfile: Profile) => {
+    const conversationRef = doc(profilesCollection, userid || "");
+
+    await updateDoc(conversationRef, {
+      picture: editedProfile.picture,
+      name: editedProfile.name,
+      pronouns: editedProfile.pronouns,
+      year: editedProfile.year,
+      major: editedProfile.major,
+      bio: editedProfile.bio,
+      isHidden: editedProfile.isHidden,
+    });
+  };
+
   const handleSave = () => {
+    handleSaveWrite(editedProfile);
     setProfile(editedProfile);
     setIsEditing(false);
   };
@@ -125,7 +151,7 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
-  const handleInputChange = (field: keyof UserProfile, value: string) => {
+  const handleInputChange = (field: keyof Profile, value: string) => {
     setEditedProfile((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -430,13 +456,36 @@ export default function ProfilePage() {
               <Heart className="w-5 h-5 mr-2" />
               My Clubs
               <Badge className="ml-2 bg-venus-200 text-venus-purple-800">
-                {profile.joinedClubs.length} clubs
+                {/* {profile.joinedClubs.length} clubs */}
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              {profile.joinedClubs.map((club) => (
+              {/* {profile.joinedClubs. */}
+              {[
+                {
+                  id: 1,
+                  name: "WICS",
+                  category: "Computer Science",
+                  avatar: "/placeholder.svg?height=40&width=40",
+                  joinDate: "September 2023",
+                },
+                {
+                  id: 2,
+                  name: "Hack at UCI",
+                  category: "Technology",
+                  avatar: "/placeholder.svg?height=40&width=40",
+                  joinDate: "October 2023",
+                },
+                {
+                  id: 3,
+                  name: "ICS Student Council",
+                  category: "Student Government",
+                  avatar: "/placeholder.svg?height=40&width=40",
+                  joinDate: "January 2024",
+                },
+              ].map((club) => (
                 <div
                   key={club.id}
                   className="flex items-center p-4 rounded-xl border-2 border-venus-100 hover:border-venus-300 transition-all duration-300 hover:shadow-md bg-venus-50/50"
