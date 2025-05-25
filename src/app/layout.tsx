@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "clubPal - University Club Social Network",
+  title: "ClubPal - University Club Social Network",
   description:
     "Connect with fellow peers, join clubs, and make friends at your university with clubPal.",
 };

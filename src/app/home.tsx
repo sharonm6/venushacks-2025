@@ -110,7 +110,7 @@ export default function Home() {
       />
 
       <h1 className="text-center text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
-        Welcome to ClubConnect
+        Welcome to ClubPal
       </h1>
       <p className="text-center text-lg text-purple-600">
         {isNavigating

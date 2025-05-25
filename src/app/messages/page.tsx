@@ -3,6 +3,7 @@
 import ChatBubbles from "@/components/chat-bubbles";
 import ChatList from "@/components/chat-list";
 import MeetVerification from "@/components/meet-verification";
+import RevealIdentities from "@/components/reveal-identities";
 import AvatarWithSpeechBubble from "@/components/avatar-speech-bubble";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +15,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Send, MapPin } from "lucide-react";
+import { Send, MapPin, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { index as indexConversations } from "@/services/conversations";
 import { index as indexProfiles } from "@/services/profiles";
@@ -36,6 +38,7 @@ import {
 } from "firebase/firestore";
 
 export default function MessagesPage() {
+  const router = useRouter();
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [userName, setUserName] = useState<string>("");
@@ -48,7 +51,12 @@ export default function MessagesPage() {
 
   const [agreedA, setAgreedA] = useState(false);
   const [agreedB, setAgreedB] = useState(false);
-  const [showMeetVerification, setShowMeetVerification] = useState(false);
+
+  // NEW: State management for the different views
+  const [currentView, setCurrentView] = useState<"chat" | "meet" | "reveal">(
+    "chat"
+  );
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   let currentUserId = "";
 
@@ -56,6 +64,7 @@ export default function MessagesPage() {
     currentUserId = localStorage.getItem("userId") || "";
   }, []);
 
+  // BACKEND NOTE: These functions remain the same but need to handle the new agreedA/agreedB logic
   const loadUserProfile = async (userId: string) => {
     const chatUserProfile = await indexProfiles(userId);
     return chatUserProfile || null;
@@ -108,7 +117,7 @@ export default function MessagesPage() {
         setUserPicture(userProfile.picture || "");
 
         if (!chatUserProfile && !userProfile) {
-          return null; // Skip if profiles not found
+          return null;
         }
 
         setUserName(userProfile!.name);
@@ -123,14 +132,11 @@ export default function MessagesPage() {
           avatar: chatUserProfile.picture,
           lastMessage: chatMessageInfo.lastMessage,
           timestamp: chatMessageInfo.timestamp,
-          isOnline: Math.random() > 0.5, // Add random online status for demo
-          unreadCount: Math.floor(Math.random() * 3), // Add random unread count for demo
         };
       })
     );
 
     setChats(chats.filter((chat) => chat !== null));
-    console.log("CHATS", chats);
   };
 
   useEffect(() => {
@@ -173,25 +179,30 @@ export default function MessagesPage() {
 
   const handleChatSelect = async (chat: Chat) => {
     setIsLoading(true);
+    setCurrentView("chat"); // Reset to chat view when selecting a new chat
 
-    // Add loading delay to prevent avatar flicker
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     const selectedConversation = conversations.find(
       (conversation) => conversation.id === chat.conversationid
     );
+
     if (selectedConversation) {
       setAgreedA(selectedConversation.agreedA);
       setAgreedB(selectedConversation.agreedB);
       setChatUserPicture(chat.avatar || "");
+
+      // BACKEND NOTE: Check if both users have agreed to meet
+      // If so, automatically show the reveal view
+      if (selectedConversation.agreedA && selectedConversation.agreedB) {
+        setCurrentView("reveal");
+      }
     }
 
     await loadChatMessages(chat.conversationid, chat.name);
     setSelectedChat(chat);
-    setShowMeetVerification(false); // Close meet verification when switching chats
     setIsLoading(false);
 
-    // Auto-focus on message input after a short delay
     setTimeout(() => {
       const messageInput = document.querySelector(
         'input[placeholder*="Message"]'
@@ -203,7 +214,7 @@ export default function MessagesPage() {
   };
 
   const handleMessageSend = async () => {
-    if (messageToSend.trim() === "") return;
+    if (messageToSend.trim() === "" || currentView !== "chat") return;
 
     await addDoc(messagesCollection, {
       conversationid: selectedChat?.conversationid,
@@ -234,7 +245,6 @@ export default function MessagesPage() {
 
     setSelectedChat(updatedChat);
 
-    // Auto-focus back to input after sending
     setTimeout(() => {
       const messageInput = document.querySelector(
         'input[placeholder*="Message"]'
@@ -245,15 +255,229 @@ export default function MessagesPage() {
     }, 50);
   };
 
-  const handleMeetReady = async (agreedA: boolean) => {
+  // NEW: Handle meet up button click with animation
+  const handleMeetUpClick = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentView("meet");
+      setIsTransitioning(false);
+    }, 300);
+  };
+
+  // NEW: Handle back to chat with animation
+  const handleBackToChat = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentView("chat");
+      setIsTransitioning(false);
+    }, 300);
+  };
+
+  // UPDATED: Handle meet ready with transition to reveal
+  const handleMeetReady = async (userAgreed: boolean) => {
+    if (!selectedChat) return;
+
     const conversationRef = doc(
       conversationsCollection,
-      selectedChat?.conversationid || ""
+      selectedChat.conversationid
     );
 
-    await updateDoc(conversationRef, {
-      agreedA: agreedA,
-    });
+    // BACKEND NOTE: Update the agreement status for the current user
+    // You need to determine if this is userA or userB based on currentUserId
+    const isUserA =
+      conversations.find((c) => c.id === selectedChat.conversationid)
+        ?.useridA === currentUserId;
+
+    const updateData = isUserA
+      ? { agreedA: userAgreed }
+      : { agreedB: userAgreed };
+
+    await updateDoc(conversationRef, updateData);
+
+    // Update local state
+    if (isUserA) {
+      setAgreedA(userAgreed);
+    } else {
+      setAgreedB(userAgreed);
+    }
+
+    // BACKEND NOTE: If both users have now agreed, transition to reveal view
+    const updatedConversation = conversations.find(
+      (c) => c.id === selectedChat.conversationid
+    );
+    const bothAgreed = isUserA ? userAgreed && agreedB : agreedA && userAgreed;
+
+    if (bothAgreed) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentView("reveal");
+        setIsTransitioning(false);
+      }, 500);
+    }
+  };
+
+  // NEW: Handle reveal completion - route to user profile
+  const handleRevealComplete = (otherUserId: string) => {
+    router.push(`/profile/${otherUserId}`);
+  };
+
+  // NEW: Render the appropriate view with animations
+  const renderChatArea = () => {
+    if (!selectedChat) {
+      return (
+        <Card className="flex-1 flex items-center justify-center relative">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <AvatarWithSpeechBubble
+              message="Select a user to view chat!"
+              avatarSrc={userPicture || "/default-avatar.png"}
+              show={true}
+              persistent={true}
+              centered={true}
+            />
+          </div>
+        </Card>
+      );
+    }
+
+    return (
+      <Card
+        className={`flex-1 flex flex-col bg-white rounded-lg shadow-sm overflow-hidden min-h-0 transition-all duration-300 ${
+          isTransitioning ? "opacity-50 scale-95" : "opacity-100 scale-100"
+        }`}
+      >
+        {currentView === "chat" && (
+          <>
+            {/* Chat Header */}
+            <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between space-y-0 border-b">
+              <div className="flex items-center space-x-3">
+                {isLoading && (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                )}
+                <div>
+                  <CardTitle>{selectedChat.name}</CardTitle>
+                  <CardDescription className="text-sm text-gray-500">
+                    {isLoading ? "Loading..." : "Active now"}
+                  </CardDescription>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMeetUpClick}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white border-0 hover:from-pink-600 hover:to-purple-700"
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                Meet Up
+              </Button>
+            </CardHeader>
+
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto">
+              <ChatBubbles
+                messages={chatMessages}
+                userPicture={userPicture}
+                chatUserPicture={chatUserPicture}
+                isLoading={isLoading}
+              />
+            </div>
+
+            {/* Message Input */}
+            <div className="flex-shrink-0 p-4 border-t bg-white">
+              <div className="flex w-full items-center space-x-2">
+                <Input
+                  type="text"
+                  placeholder={`Message ${selectedChat.name}...`}
+                  className="flex-1"
+                  value={messageToSend}
+                  onChange={(e) => setMessageToSend(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleMessageSend();
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  onClick={handleMessageSend}
+                  disabled={isLoading || messageToSend.trim() === ""}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {currentView === "meet" && (
+          <div className="flex-1 flex flex-col">
+            {/* Meet Header */}
+            <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between space-y-0 border-b">
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBackToChat}
+                  className="mr-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div>
+                  <CardTitle>Meet Up with {selectedChat.name}</CardTitle>
+                  <CardDescription>
+                    Arrange to meet in real life
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+
+            {/* Meet Verification Content */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              <MeetVerification
+                agreedA={agreedA}
+                agreedB={agreedB}
+                handleMeetReady={handleMeetReady}
+                currentUserAvatar={userPicture}
+                otherUserAvatar={chatUserPicture}
+                otherUserName={selectedChat.name}
+                otherUserId={selectedChat.userId} // NEW: Pass the other user's ID
+              />
+            </div>
+          </div>
+        )}
+
+        {currentView === "reveal" && (
+          <div className="flex-1 flex flex-col">
+            {/* Reveal Header */}
+            <CardHeader className="flex-shrink-0 border-b">
+              <div className="text-center">
+                <CardTitle className="text-2xl bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
+                  You're Set!
+                </CardTitle>
+                <CardDescription>You both want to meet up!</CardDescription>
+              </div>
+            </CardHeader>
+
+            {/* Reveal Identities Content */}
+            <div className="flex-1 overflow-y-auto">
+              <RevealIdentities
+                currentUserAvatar={userPicture}
+                currentUserName={userName}
+                otherUserAvatar={chatUserPicture}
+                otherUserName={selectedChat.name}
+                onRevealComplete={handleRevealComplete}
+                otherUserId={selectedChat.userId}
+                simulateUser2Ready={true}
+                onBackToChat={handleBackToChat} // NEW: Pass the back function
+              />
+            </div>
+          </div>
+        )}
+      </Card>
+    );
   };
 
   return (
@@ -275,110 +499,8 @@ export default function MessagesPage() {
           </CardContent>
         </Card>
 
-        {/* Right side - Chat area (70%) */}
-        <div className="w-[70%] flex flex-col">
-          {selectedChat ? (
-            <>
-              {/* Top section - Chat header with meet verification */}
-              <Card className="flex-shrink-0 mb-4">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                  <div className="flex items-center space-x-3">
-                    {/* Show loading indicator in header during chat switch */}
-                    {isLoading ? (
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                    ) : null}
-                    <div>
-                      <CardTitle>{selectedChat.name}</CardTitle>
-                      <CardDescription className="text-sm text-gray-500">
-                        {isLoading ? "Loading..." : "Active now"}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setShowMeetVerification(!showMeetVerification)
-                      }
-                      disabled={isLoading}
-                    >
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Meet Up
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                {/* Meet Verification Section */}
-                {showMeetVerification && !isLoading && (
-                  <CardContent className="pt-0">
-                    <MeetVerification
-                      agreedA={agreedA || false}
-                      agreedB={agreedB || false}
-                      handleMeetReady={handleMeetReady}
-                    />
-                  </CardContent>
-                )}
-              </Card>
-
-              {/* Chat messages area - Fill remaining space exactly */}
-              <div className="flex-1 flex flex-col bg-white rounded-lg border shadow-sm overflow-hidden min-h-0">
-                {/* Chat messages with scroll */}
-                <div className="flex-1 overflow-y-auto">
-                  <ChatBubbles
-                    messages={chatMessages}
-                    userPicture={userPicture}
-                    chatUserPicture={chatUserPicture}
-                    isLoading={isLoading}
-                  />
-                </div>
-
-                {/* Message input - Fixed at bottom */}
-                <div className="flex-shrink-0 p-4 border-t bg-white">
-                  <div className="flex w-full items-center space-x-2">
-                    <Input
-                      type="text"
-                      placeholder={`Message ${selectedChat.name}...`}
-                      className="flex-1"
-                      value={messageToSend}
-                      onChange={(e) => setMessageToSend(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleMessageSend();
-                        }
-                      }}
-                      disabled={isLoading}
-                    />
-                    <Button
-                      type="submit"
-                      size="sm"
-                      onClick={handleMessageSend}
-                      disabled={isLoading || messageToSend.trim() === ""}
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <Card className="flex-1 flex items-center justify-center relative">
-              {/* Avatar Speech Bubble - Centered in chat area */}
-              {!selectedChat && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <AvatarWithSpeechBubble
-                    message="Select a user to view chat!"
-                    avatarSrc={userPicture || "/default-avatar.png"}
-                    show={true}
-                    persistent={true}
-                    centered={true}
-                  />
-                </div>
-              )}
-            </Card>
-          )}
-        </div>
+        {/* Right side - Dynamic content area (70%) */}
+        <div className="w-[70%] flex flex-col">{renderChatArea()}</div>
       </div>
     </div>
   );

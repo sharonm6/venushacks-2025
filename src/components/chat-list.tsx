@@ -53,10 +53,6 @@ export default function ChatList({
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
-                {/* Online indicator */}
-                {chat.isOnline && !isLoading && (
-                  <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
-                )}
                 {/* Loading indicator */}
                 {isLoading && selectedChatId === chat.id && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-full">
@@ -73,15 +69,10 @@ export default function ChatList({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between mt-1">
+                <div className="mt-1">
                   <p className="text-sm text-gray-600 truncate">
                     {chat.lastMessage}
                   </p>
-                  {chat.unreadCount > 0 && (
-                    <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 flex-shrink-0 ml-2">
-                      {chat.unreadCount}
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
