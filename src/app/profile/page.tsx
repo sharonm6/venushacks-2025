@@ -331,12 +331,23 @@ export default function ProfilePage() {
                         handleInputChange("name", e.target.value)
                       }
                       className="mt-1"
+                      placeholder="Name"
                     />
                   </div>
                 ) : (
-                  <h2 className="text-2xl font-bold text-venus-purple-900 mb-2">
-                    {profile.isHidden ? "Hidden User" : profile.name}
-                  </h2>
+                  <>
+                    {profile.id ? (
+                      <>
+                        <h2 className="text-2xl font-bold text-venus-purple-900 mb-2">
+                          {profile.isHidden
+                            ? "Hidden User"
+                            : profile.name || "Anonymous"}
+                        </h2>
+                      </>
+                    ) : (
+                      <></>
+                    )}
+                  </>
                 )}
 
                 {/* Pronouns */}
@@ -357,12 +368,14 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center md:justify-start mb-3">
-                    <Badge
-                      variant="outline"
-                      className="text-venus-purple-600 border-venus-purple-300"
-                    >
-                      {profile.pronouns}
-                    </Badge>
+                    {profile.id && (
+                      <Badge
+                        variant="outline"
+                        className="text-venus-purple-600 border-venus-purple-300"
+                      >
+                        {profile.pronouns || "Pronouns not set"}
+                      </Badge>
+                    )}
                   </div>
                 )}
 
@@ -401,16 +414,26 @@ export default function ProfilePage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                     <div className="flex items-center justify-center md:justify-start">
-                      <Calendar className="w-4 h-4 text-venus-purple-600 mr-2" />
-                      <span className="text-venus-purple-700 font-medium">
-                        {profile.year}
-                      </span>
+                      {profile.id && (
+                        <>
+                          <Calendar className="w-4 h-4 text-venus-purple-600 mr-2" />
+
+                          <span className="text-venus-purple-700 font-medium">
+                            {profile.year || "Year not set"}
+                          </span>
+                        </>
+                      )}
                     </div>
                     <div className="flex items-center justify-center md:justify-start">
-                      <GraduationCap className="w-4 h-4 text-venus-purple-600 mr-2" />
-                      <span className="text-venus-purple-700 font-medium">
-                        {profile.major}
-                      </span>
+                      {profile.id && (
+                        <>
+                          <GraduationCap className="w-4 h-4 text-venus-purple-600 mr-2" />
+
+                          <span className="text-venus-purple-700 font-medium">
+                            {profile.major || "Major not set"}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
