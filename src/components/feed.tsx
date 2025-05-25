@@ -34,13 +34,13 @@ interface Comment {
   likes: number;
 }
 
-interface CommentProps {
-  comment: Comment;
-}
+// interface CommentProps {
+//   comment: Comment;
+// }
 
 type CommentsType = Record<string, Comment[]>;
 
-function Comment({ comment }: CommentProps) {
+function Comment({ comment }: { comment: Comment }) {
   const router = useRouter();
   const [liked, setLiked] = useState(false);
   const [commentLikes, setCommentLikes] = useState(comment.likes);
@@ -117,7 +117,7 @@ export default function Feed({ club }: { club: Club }) {
   const router = useRouter();
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [postLikes, setPostLikes] = useState<Record<string, number>>({});
   const [expandedComments, setExpandedComments] = useState<Set<string>>(
     new Set()
@@ -233,6 +233,7 @@ export default function Feed({ club }: { club: Club }) {
         content: post.content,
         timestamp: formatTimestamp(post.timestamp),
         likes: post.likes ? post.likes.split(",").length : 0,
+        likedUsers: post.likes || "",
         comments: post.comments ? post.comments.split(";").length : 0,
         commentsString: post.comments || "",
       }))
@@ -243,6 +244,15 @@ export default function Feed({ club }: { club: Club }) {
         acc[item.id] = item.likes;
         return acc;
       }, {} as Record<string, number>)
+    );
+
+    setLikedPosts(
+      feedItems.reduce((acc, item) => {
+        if (item.likedUsers.includes(currentUser.id)) {
+          acc.add(item.id);
+        }
+        return acc;
+      }, new Set<string>())
     );
 
     const parsedComments = parseComments(posts);
@@ -260,7 +270,7 @@ export default function Feed({ club }: { club: Club }) {
     console.log("Feed items loaded:", feedItems);
   };
 
-  const handleLike = (postId: number) => {
+  const handleLike = (postId: string) => {
     const newLikedPosts = new Set(likedPosts);
     const isLiked = likedPosts.has(postId);
 
@@ -273,6 +283,25 @@ export default function Feed({ club }: { club: Club }) {
     }
 
     setLikedPosts(newLikedPosts);
+
+    updateDoc(doc(postsCollection, postId), {
+      likes: isLiked
+        ? feedItems
+            .find((item) => item.id === postId)
+            ?.likedUsers.split(",")
+            .filter((userId) => userId !== currentUser.id)
+            .concat(isLiked ? [] : currentUser.id)
+            .join(",")
+        : feedItems
+            .find((item) => item.id === postId)
+            ?.likedUsers.split(",")
+            .concat(currentUser.id)
+            .join(","),
+    })
+      .then(() => {})
+      .catch((error) => {
+        console.error("Error updating post likes:", error);
+      });
   };
 
   const toggleComments = (postId: string) => {
@@ -550,7 +579,7 @@ export default function Feed({ club }: { club: Club }) {
                       <button
                         onClick={() => handleLike(item.id)}
                         className={`flex items-center space-x-2 transition-colors group ${
-                          likedPosts.has(item.id)
+                          item.likedUsers?.includes(currentUser.id)
                             ? "text-red-500"
                             : "text-gray-500 hover:text-red-500"
                         }`}
