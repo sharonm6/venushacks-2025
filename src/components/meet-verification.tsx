@@ -60,17 +60,6 @@ export default function MeetVerification({
                 />
                 <AvatarFallback>Me</AvatarFallback>
               </Avatar>
-              <div
-                className={`absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-2 border-white flex items-center justify-center ${
-                  currentUserReady ? "bg-green-500" : "bg-gray-300"
-                }`}
-              >
-                {currentUserReady ? (
-                  <Check className="h-3 w-3 text-white" />
-                ) : (
-                  <Clock className="h-3 w-3 text-gray-600" />
-                )}
-              </div>
             </div>
             <span className="text-sm font-medium">
               {users.currentUser.name}

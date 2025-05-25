@@ -285,9 +285,9 @@ export default function MessagesPage() {
                     ) : null}
                     <div>
                       <CardTitle>{selectedChat.name}</CardTitle>
-                      <CardDescription className="text-sm text-gray-500">
+                      {/* <CardDescription className="text-sm text-gray-500">
                         {isLoading ? "Loading..." : "Active now"}
-                      </CardDescription>
+                      </CardDescription> */}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -318,7 +318,7 @@ export default function MessagesPage() {
               </Card>
 
               {/* Chat messages area - Fill remaining space exactly */}
-              <div className="flex-1 flex flex-col bg-white rounded-lg border shadow-sm overflow-hidden min-h-0">
+              <Card className="flex-1 flex flex-col bg-white rounded-lg shadow-sm overflow-hidden min-h-0">
                 {/* Chat messages with scroll */}
                 <div className="flex-1 overflow-y-auto">
                   <ChatBubbles
@@ -356,7 +356,7 @@ export default function MessagesPage() {
                     </Button>
                   </div>
                 </div>
-              </div>
+              </Card>
             </>
           ) : (
             <Card className="flex-1 flex items-center justify-center relative">
