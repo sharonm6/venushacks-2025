@@ -141,7 +141,7 @@ export const Logo = () => {
         animate={{ opacity: 1 }}
         className="font-medium whitespace-pre bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent"
       >
-        clubPal
+        ClubPal
       </motion.span>
     </Link>
   );
