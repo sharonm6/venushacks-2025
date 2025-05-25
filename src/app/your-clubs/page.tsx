@@ -1,10 +1,11 @@
-import ClubBanner from "@/components/club-banner";
+"use client";
+import { AnimatedTestimonialsDemo } from "@/components/ui/club-list";
 
-export default function Home() {
+export default function YourClubsPage() {
   return (
     <div className="mx-auto flex w-full flex-col space-y-8 bg-venus-light">
       <div className="mx-auto flex h-screen w-full flex-col">
-        <ClubBanner />
+        <AnimatedTestimonialsDemo />
       </div>
     </div>
   );
