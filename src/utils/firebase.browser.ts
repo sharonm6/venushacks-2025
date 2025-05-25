@@ -23,6 +23,7 @@ const messagesCollection = collection(db, "messages");
 const postsCollection = collection(db, "posts");
 const accountsCollection = collection(db, "accounts");
 const matchesCollection = collection(db, "matches");
+const surveyAnswersCollection = collection(db, "surveyAnswers");
 
 export {
   app,
@@ -34,4 +35,5 @@ export {
   postsCollection,
   accountsCollection,
   matchesCollection,
+  surveyAnswersCollection,
 };

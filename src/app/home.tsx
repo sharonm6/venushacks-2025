@@ -4,8 +4,18 @@ import { useRouter } from "next/navigation";
 import AvatarWithSpeechBubble from "@/components/avatar-speech-bubble";
 import LoadingAnimation from "@/components/loader/loadingAnimation";
 import { addDoc } from "firebase/firestore";
-import { matchesCollection } from "@/utils/firebase.browser";
+import {
+  matchesCollection,
+  surveyAnswersCollection,
+} from "@/utils/firebase.browser";
 import { index } from "@/services/matches";
+import { generateClubMatches } from "@/lib/matchingAlgorithm";
+import { getDocs, where, query } from "firebase/firestore";
+
+interface SurveyAnswer {
+  questionId: string;
+  answer: string | string[];
+}
 
 export default function Home() {
   const [userId, setUserId] = useState<string | null>("");
@@ -54,10 +64,40 @@ export default function Home() {
 
       const userid = localStorage.getItem("userId") || "";
 
-      await addDoc(matchesCollection, {
-        userid: userid,
-        matches: "wics,hack,icssc",
-      });
+      try {
+        // NEW: Generate matches using the algorithm
+        const surveyAnswers = await getUserSurveyAnswers(userid);
+        console.log("📋 Survey answers found:", surveyAnswers); // DEBUG
+
+        if (surveyAnswers.length > 0) {
+          // User has survey data - generate smart matches
+          const clubNames = await generateClubMatches(userid, surveyAnswers);
+          console.log("🎯 Generated club names:", clubNames); // DEBUG
+
+          // Save as simple format
+          const docRef = await addDoc(matchesCollection, {
+            userid: userid,
+            clubs: clubNames, // Array of 3 club name strings
+            timestamp: new Date(),
+          });
+
+          console.log("✅ Match document created with ID:", docRef.id); // DEBUG
+        } else {
+          // Fallback matches
+          await addDoc(matchesCollection, {
+            userid: userid,
+            clubs: [
+              "Women in Computer Science",
+              "Hack at UCI",
+              "ICS Student Council",
+            ],
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("❌ Error generating matches:", error);
+        // Fallback on error...
+      }
 
       // Navigate to matches after fade completes
       setTimeout(() => {
@@ -88,8 +128,8 @@ export default function Home() {
           }`}
         >
           <LoadingAnimation
-            text="Opening Letter..."
-            subtext="Taking you to your club matches ✨"
+            text="Analyzing your interests..."
+            subtext="Finding your perfect club matches ✨"
           />
         </div>
       )}
@@ -124,7 +164,7 @@ export default function Home() {
       </h1>
       <p className="text-center text-lg text-purple-600">
         {isNavigating
-          ? "Opening your matches... ✨"
+          ? "Analyzing your perfect matches... ✨"
           : mailStatus === "received"
           ? "Looks like you've got mail! 📬"
           : mailStatus === "empty"
@@ -135,26 +175,41 @@ export default function Home() {
   );
 }
 
+// NEW: Function to get user's survey answers
+const getUserSurveyAnswers = async (
+  userid: string
+): Promise<SurveyAnswer[]> => {
+  try {
+    const q = query(surveyAnswersCollection, where("userId", "==", userid));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      const data = doc.data();
+      return data.answers || [];
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Error fetching survey answers:", error);
+    return [];
+  }
+};
+
 const getMatchesExist = async (userid: string): Promise<boolean> => {
   const matches = await index(userid);
-
-  return matches?.matches != "";
+  return matches?.clubs && matches.clubs.length > 0;
 };
 
 async function fetchUserMailStatus(): Promise<
   "loading" | "empty" | "received"
 > {
   const userid = localStorage.getItem("userId");
-  await getMatchesExist(userid || "")
-    .then((matchesExist) => {
-      if (!matchesExist) {
-        return Promise.resolve("empty");
-      } else {
-        return Promise.resolve("received");
-      }
-    })
-    .catch(() => {
-      return Promise.resolve("loading");
-    });
-  return Promise.resolve("empty");
+  try {
+    const matchesExist = await getMatchesExist(userid || "");
+    return matchesExist ? "received" : "empty";
+  } catch (error) {
+    console.error("Error fetching mail status:", error);
+    return "empty";
+  }
 }

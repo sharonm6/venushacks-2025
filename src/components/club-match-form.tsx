@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +22,10 @@ import {
   Star,
   MapPin,
 } from "lucide-react";
-import { matchesCollection } from "@/utils/firebase.browser";
+import {
+  matchesCollection,
+  surveyAnswersCollection,
+} from "@/utils/firebase.browser";
 import { addDoc } from "firebase/firestore";
 
 interface SurveyAnswer {
@@ -151,9 +155,11 @@ const surveyQuestions: Question[] = [
 ];
 
 export default function ClubMatchingSurvey() {
+  const router = useRouter();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<SurveyAnswer[]>([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const progress = ((currentQuestion + 1) / surveyQuestions.length) * 100;
   const question = surveyQuestions[currentQuestion];
@@ -209,9 +215,38 @@ export default function ClubMatchingSurvey() {
   };
 
   const handleSubmit = async () => {
-    console.log("Survey completed:", answers);
+    if (currentQuestion < surveyQuestions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      setIsSubmitting(true);
+      try {
+        const userId = localStorage.getItem("userId");
 
-    window.location.href = "/";
+        // NEW: Format answers properly for the matching algorithm
+        const formattedAnswers = answers.map((answer) => ({
+          questionId: answer.questionId,
+          answer: answer.answer,
+        }));
+
+        console.log("📋 Formatted survey answers:", formattedAnswers); // DEBUG
+
+        // Save survey answers for future matching
+        await addDoc(surveyAnswersCollection, {
+          userId: userId,
+          answers: formattedAnswers,
+          timestamp: new Date(),
+        });
+
+        console.log("✅ Survey answers saved to database"); // DEBUG
+
+        // Navigate to home where matches will be generated
+        router.push("/");
+      } catch (error) {
+        console.error("❌ Error submitting survey:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   if (isComplete) {
