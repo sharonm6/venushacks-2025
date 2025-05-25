@@ -11,6 +11,7 @@ import {
 import { index } from "@/services/matches";
 import { generateClubMatches } from "@/lib/matchingAlgorithm";
 import { getDocs, where, query } from "firebase/firestore";
+import clubsDatabase from "@/lib/clubDatabase";
 
 interface SurveyAnswer {
   questionId: string;
@@ -74,10 +75,21 @@ export default function Home() {
           const clubNames = await generateClubMatches(userid, surveyAnswers);
           console.log("🎯 Generated club names:", clubNames); // DEBUG
 
+          console.log(
+            clubNames
+              .map((a) => {
+                return clubsDatabase.getidfromname(a)?.id || a;
+              })
+              .join(",")
+          ); // DEBUG')
           // Save as simple format
           const docRef = await addDoc(matchesCollection, {
             userid: userid,
-            clubs: clubNames, // Array of 3 club name strings
+            clubs: clubNames
+              .map((a) => {
+                return clubsDatabase.getidfromname(a)?.id || a;
+              })
+              .join(","), // Array of 3 club name strings
             timestamp: new Date(),
           });
 

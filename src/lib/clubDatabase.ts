@@ -592,6 +592,15 @@ export const clubsDatabase = {
     );
   },
 
+  getidfromname: (query: string): Club => {
+    const searchTerm = query.toLowerCase();
+    return clubsData.filter(
+      (club) =>
+        club.name.toLowerCase().includes(searchTerm) ||
+        club.fullName.toLowerCase().includes(searchTerm)
+    )[0];
+  },
+
   // Filter by category
   getClubsByCategory: (category: string): Club[] => {
     return clubsData.filter(
