@@ -51,11 +51,11 @@ export default function MessagesPage() {
     return conversations;
   };
 
-  const loadChatMessageInfo = async (conversation: Conversation) => {
+  const loadChatMessageInfo = async (conversationid: string) => {
     const chatMessages = await indexMessages(
       query(
         messagesCollection,
-        where("conversationid", "==", conversation.id),
+        where("conversationid", "==", conversationid),
         orderBy("timestamp", "desc")
       )
     );
@@ -71,7 +71,7 @@ export default function MessagesPage() {
     } else
       return {
         lastMessage: "",
-        timestamp: Date.now(),
+        timestamp: new Date(Date.now()).toLocaleDateString(),
       };
   };
 
@@ -94,7 +94,7 @@ export default function MessagesPage() {
 
         setUserName(userProfile!.name);
 
-        const chatMessageInfo = await loadChatMessageInfo(conversation);
+        const chatMessageInfo = await loadChatMessageInfo(conversation.id);
 
         return {
           id: idx,
@@ -163,6 +163,27 @@ export default function MessagesPage() {
       timestamp: new Date(),
     });
     setMessageToSend("");
+
+    if (!selectedChat) return;
+
+    await loadChatMessages(selectedChat.conversationid, selectedChat.name);
+
+    const chatMessageInfo = await loadChatMessageInfo(
+      selectedChat.conversationid
+    );
+
+    const updatedChat = {
+      ...selectedChat,
+      lastMessage: chatMessageInfo.lastMessage,
+      timestamp: chatMessageInfo.timestamp,
+    };
+
+    setChats((prevChats) => {
+      const filtered = prevChats.filter((chat) => chat.id !== selectedChat.id);
+      return [updatedChat, ...filtered];
+    });
+
+    setSelectedChat(updatedChat);
   };
 
   return (
