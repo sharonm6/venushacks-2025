@@ -156,7 +156,9 @@ export default function MessagesPage() {
   };
 
   const handleMessageSend = async () => {
-    await await addDoc(messagesCollection, {
+    if (messageToSend.trim() === "") return;
+
+    await addDoc(messagesCollection, {
       conversationid: selectedChat?.conversationid,
       senderid: currentUserId,
       content: messageToSend,
@@ -253,6 +255,12 @@ export default function MessagesPage() {
                       className="flex-1"
                       value={messageToSend}
                       onChange={(e) => setMessageToSend(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleMessageSend();
+                        }
+                      }}
                     />
                     <Button type="submit" size="sm" onClick={handleMessageSend}>
                       <Send className="h-4 w-4" />
