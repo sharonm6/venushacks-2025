@@ -3,7 +3,8 @@ import { ChatMessage } from "@/lib/types";
 
 interface ChatBubblesProps {
   messages: ChatMessage[];
-  currentUserId: string;
+  userPicture?: string;
+  chatUserPicture?: string;
 }
 
 // Group messages by sender and consecutive timing
@@ -34,7 +35,8 @@ const groupMessages = (messages: ChatMessage[]) => {
 
 export default function ChatBubbles({
   messages,
-  currentUserId,
+  userPicture,
+  chatUserPicture,
 }: ChatBubblesProps) {
   const messageGroups = groupMessages(messages);
 
@@ -59,7 +61,7 @@ export default function ChatBubbles({
           {!group.isCurrentUser && (
             <div className="flex-shrink-0 mb-1">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={group.senderAvatar} alt={group.senderName} />
+                <AvatarImage src={chatUserPicture} alt={group.senderName} />
                 <AvatarFallback>
                   {group.senderName
                     .split(" ")
@@ -111,7 +113,7 @@ export default function ChatBubbles({
           {group.isCurrentUser && (
             <div className="flex-shrink-0 mb-1">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={group.senderAvatar} alt="You" />
+                <AvatarImage src={userPicture} alt="You" />
                 <AvatarFallback>Me</AvatarFallback>
               </Avatar>
             </div>

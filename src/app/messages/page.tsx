@@ -41,18 +41,17 @@ export default function MessagesPage() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [messageToSend, setMessageToSend] = useState<string>("");
+  const [chatUserPicture, setChatUserPicture] = useState<string>("");
+  const [userPicture, setUserPicture] = useState<string>("");
 
   const [agreedA, setAgreedA] = useState(false);
   const [agreedB, setAgreedB] = useState(false);
   const [showMeetVerification, setShowMeetVerification] = useState(false);
 
-  const currentUserId = "9SDq83UWnqdtcUFKeYUZ"; // This would come from your auth system
+  const currentUserId = "jZDLVSPOI9A3xQQhwEef"; // This would come from your auth system
 
-  const loadUserProfile = async (chatUserId: string) => {
-    const profiles = await indexProfiles();
-    const chatUserProfile = profiles.find(
-      (profile) => profile.id === chatUserId
-    );
+  const loadUserProfile = async (userId: string) => {
+    const chatUserProfile = await indexProfiles(userId);
 
     return chatUserProfile || null;
   };
@@ -99,7 +98,10 @@ export default function MessagesPage() {
             : conversation.useridA;
 
         const chatUserProfile = await loadUserProfile(chatUserId);
+        setChatUserPicture(chatUserProfile.picture || "");
+
         const userProfile = await loadUserProfile(currentUserId);
+        setUserPicture(userProfile.picture || "");
 
         if (!chatUserProfile && !userProfile) {
           return null; // Skip if profiles not found
@@ -114,7 +116,7 @@ export default function MessagesPage() {
           conversationid: conversation.id,
           userId: chatUserId,
           name: chatUserProfile.name,
-          avatar: "avatar",
+          avatar: chatUserProfile.picture,
           lastMessage: chatMessageInfo.lastMessage,
           timestamp: chatMessageInfo.timestamp,
         };
@@ -149,7 +151,10 @@ export default function MessagesPage() {
         senderId: chatMessage.senderid,
         senderName:
           chatMessage.senderid === currentUserId ? userName : chatUserName,
-        senderAvatar: "https://via.placeholder.com/40",
+        senderAvatar:
+          chatMessage.senderid === currentUserId
+            ? userPicture
+            : chatUserPicture,
         message: chatMessage.content,
         timestamp: new Date(
           chatMessage.timestamp.seconds * 1000
@@ -169,6 +174,7 @@ export default function MessagesPage() {
     if (selectedConversation) {
       setAgreedA(selectedConversation.agreedA);
       setAgreedB(selectedConversation.agreedB);
+      setChatUserPicture(chat.avatar || "");
     }
 
     loadChatMessages(chat.conversationid, chat.name);
@@ -280,7 +286,8 @@ export default function MessagesPage() {
                 <CardContent className="flex-1 overflow-y-auto p-0">
                   <ChatBubbles
                     messages={chatMessages}
-                    currentUserId={currentUserId}
+                    userPicture={userPicture}
+                    chatUserPicture={chatUserPicture}
                   />
                 </CardContent>
                 <CardFooter className="flex-shrink-0 p-4">
