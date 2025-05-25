@@ -1,9 +1,9 @@
 import { FlippableCards } from "@/components/ui/flip-cards";
 import { clubsDatabase, type Club } from "@/lib/clubDatabase";
-import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { index } from "@/services/profiles";
 
 // Define Club interface to match the testimonial structure
 interface ClubTestimonial {
@@ -49,11 +49,15 @@ const convertClubToTestimonial = (club: Club): ClubTestimonial => {
 interface ClubFlippableCardsProps {
   clubs: ClubTestimonial[];
   autoplay?: boolean;
+  joinedClubs: string[];
+  setJoinedClubs: (clubs: string[] | ((prev: string[]) => string[])) => void;
 }
 
 const ClubFlippableCards = ({
   clubs,
   autoplay = false,
+  joinedClubs = [],
+  setJoinedClubs,
 }: ClubFlippableCardsProps) => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const router = useRouter();
@@ -107,6 +111,8 @@ const ClubFlippableCards = ({
             onActiveChange={setActiveIndex}
             onVisitWebsite={handleVisitWebsite}
             onViewClubPage={handleViewClubPage}
+            joinedClubs={joinedClubs}
+            setJoinedClubs={setJoinedClubs}
           />
         </div>
       </div>
@@ -126,8 +132,22 @@ const ClubFlippableCards = ({
 };
 
 export function UserJoinedClubs() {
-  // Get user's joined clubs from the database
-  const userClubs: Club[] = userJoinedClubIds
+  const userid = "jZDLVSPOI9A3xQQhwEef";
+  const [joinedClubs, setJoinedClubs] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadJoinedClubs();
+  }, []);
+
+  const loadJoinedClubs = async () => {
+    const profile = await index(userid);
+
+    setJoinedClubs(
+      profile.clubs.split(",").map((club) => club.split("(")[0]) || []
+    );
+  };
+
+  const userClubs: Club[] = joinedClubs
     .map((id: string) => clubsDatabase.getClubById(id))
     .filter((club): club is Club => club !== undefined);
 
@@ -154,7 +174,14 @@ export function UserJoinedClubs() {
     );
   }
 
-  return <ClubFlippableCards clubs={clubTestimonials} autoplay={false} />;
+  return (
+    <ClubFlippableCards
+      clubs={clubTestimonials}
+      autoplay={false}
+      joinedClubs={joinedClubs}
+      setJoinedClubs={setJoinedClubs}
+    />
+  );
 }
 
 // Export for backward compatibility

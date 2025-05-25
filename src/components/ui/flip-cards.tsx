@@ -191,15 +191,18 @@ export const FlippableCards = ({
   onActiveChange,
   onVisitWebsite,
   onViewClubPage,
+  joinedClubs,
+  setJoinedClubs,
 }: {
   testimonials: Testimonial[];
   autoplay?: boolean;
   onActiveChange?: (index: number) => void;
   onVisitWebsite?: () => void;
   onViewClubPage?: () => void;
+  joinedClubs: string[];
+  setJoinedClubs: (clubs: string[] | ((prev: string[]) => string[])) => void;
 }) => {
   const [active, setActive] = useState(0);
-  const [joinedClubs, setJoinedClubs] = useState<Set<string>>(new Set());
   const [justJoinedClub, setJustJoinedClub] = useState<string | null>(null);
 
   const handleNext = useCallback(() => {
@@ -221,7 +224,7 @@ export const FlippableCards = ({
     if (!clubId) return;
 
     // Add to joined clubs
-    setJoinedClubs((prev) => new Set([...prev, clubId]));
+    setJoinedClubs((prev) => [...prev, clubId]);
     setJustJoinedClub(clubId);
 
     // TODO: Here you would typically make an API call to join the club
@@ -232,7 +235,7 @@ export const FlippableCards = ({
     (clubId: string) => {
       if (!clubId) return false;
       return (
-        joinedClubs.has(clubId) ||
+        joinedClubs.includes(clubId) ||
         testimonials.find((t) => t.id === clubId)?.isJoined
       );
     },
