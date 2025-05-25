@@ -8,6 +8,7 @@ import { index as indexPosts } from "@/services/posts";
 import { index as indexProfile } from "@/services/profiles";
 import { Post, FeedItem } from "@/lib/types";
 import { type Club } from "@/lib/clubDatabase";
+import { parse } from "path";
 
 // Mock comments data
 const mockComments = {
@@ -160,7 +161,6 @@ interface Comment {
   user: {
     name: string;
     avatar: string;
-    username: string;
   };
   content: string;
   timestamp: string;
@@ -171,7 +171,7 @@ interface CommentProps {
   comment: Comment;
 }
 
-type CommentsType = Record<number, Comment[]>;
+type CommentsType = Record<string, Comment[]>;
 
 function Comment({ comment }: CommentProps) {
   const [liked, setLiked] = useState(false);
@@ -272,6 +272,50 @@ export default function Feed({ club }: { club: Club }) {
     };
   };
 
+  const parseComments = (posts: Post[]) => {
+    const parsedComments: CommentsType = {};
+    posts.forEach(async (post) => {
+      if (post.comments) {
+        const commentStrings = post.comments.split(";");
+        parsedComments[post.id] = await Promise.all(
+          commentStrings.map(async (commentStr, index) => {
+            const match = commentStr.match(/^(.+)\(([^,]+),([^,]+),(\d+)\)$/);
+            if (match) {
+              const [, content, userid, timestamp, numlikes] = match;
+              const commenterInfo = await getUserInfo(userid);
+
+              return {
+                id: index + 1,
+                user: {
+                  name: commenterInfo.name || "Hidden user",
+                  avatar: commenterInfo.avatar || "/avatar0.png",
+                },
+                content: content.trim(),
+                timestamp: formatTimestamp({
+                  seconds: parseInt(new Date(timestamp).getTime() / 1000 + ""),
+                  nanoseconds: 0,
+                }),
+                likes: parseInt(numlikes),
+              };
+            }
+            return {
+              id: index + 1,
+              user: {
+                name: "User",
+                avatar: "/avatar0.png",
+                username: "user",
+              },
+              content: commentStr,
+              timestamp: "1 hour ago",
+              likes: 0,
+            };
+          })
+        );
+      }
+    });
+    return parsedComments;
+  };
+
   const loadFeed = async () => {
     const posts = await indexPosts(club.id);
 
@@ -286,9 +330,19 @@ export default function Feed({ club }: { club: Club }) {
         content: post.content,
         timestamp: formatTimestamp(post.timestamp),
         likes: post.likes ? post.likes.split(",").length : 0,
-        comments: post.comments ? post.comments.split(",").length : 0,
+        comments: post.comments ? post.comments.split(";").length : 0,
       }))
     );
+
+    setPostLikes(
+      feedItems.reduce((acc, item) => {
+        acc[item.id] = item.likes;
+        return acc;
+      }, {} as Record<string, number>)
+    );
+
+    const parsedComments = parseComments(posts);
+    setComments(parsedComments);
 
     setPostLikes(
       feedItems.reduce((acc, item) => {
