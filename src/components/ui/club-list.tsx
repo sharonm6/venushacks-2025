@@ -85,7 +85,7 @@ const ClubFlippableCards = ({
   };
 
   const handleViewAllClubs = () => {
-    router.push("/clubs");
+    router.push("/all-clubs");
   };
 
   return (
