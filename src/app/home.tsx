@@ -61,6 +61,8 @@ export default function Home() {
         message="You Received Mail!"
         avatarSrc="/avatar0.png"
         show={showAvatar}
+        persistent={true}
+        centered={false}
       />
 
       {/* Lottie Animation Overlay with Fade */}

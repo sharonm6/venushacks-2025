@@ -3,6 +3,7 @@
 import ChatBubbles from "@/components/chat-bubbles";
 import ChatList from "@/components/chat-list";
 import MeetVerification from "@/components/meet-verification";
+import AvatarWithSpeechBubble from "@/components/avatar-speech-bubble";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,6 +44,7 @@ export default function MessagesPage() {
   const [messageToSend, setMessageToSend] = useState<string>("");
   const [chatUserPicture, setChatUserPicture] = useState<string>("");
   const [userPicture, setUserPicture] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [agreedA, setAgreedA] = useState(false);
   const [agreedB, setAgreedB] = useState(false);
@@ -52,13 +54,11 @@ export default function MessagesPage() {
 
   const loadUserProfile = async (userId: string) => {
     const chatUserProfile = await indexProfiles(userId);
-
     return chatUserProfile || null;
   };
 
   const loadConversations = async () => {
     const conversations = await indexConversations();
-
     setConversations(conversations);
     return conversations;
   };
@@ -119,13 +119,13 @@ export default function MessagesPage() {
           avatar: chatUserProfile.picture,
           lastMessage: chatMessageInfo.lastMessage,
           timestamp: chatMessageInfo.timestamp,
+          isOnline: Math.random() > 0.5, // Add random online status for demo
+          unreadCount: Math.floor(Math.random() * 3), // Add random unread count for demo
         };
       })
     );
 
     setChats(chats.filter((chat) => chat !== null));
-
-    // console.log("CONVERSATIONS", conversations);
     console.log("CHATS", chats);
   };
 
@@ -167,7 +167,12 @@ export default function MessagesPage() {
     );
   };
 
-  const handleChatSelect = (chat: Chat) => {
+  const handleChatSelect = async (chat: Chat) => {
+    setIsLoading(true);
+
+    // Add loading delay to prevent avatar flicker
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     const selectedConversation = conversations.find(
       (conversation) => conversation.id === chat.conversationid
     );
@@ -177,9 +182,20 @@ export default function MessagesPage() {
       setChatUserPicture(chat.avatar || "");
     }
 
-    loadChatMessages(chat.conversationid, chat.name);
+    await loadChatMessages(chat.conversationid, chat.name);
     setSelectedChat(chat);
     setShowMeetVerification(false); // Close meet verification when switching chats
+    setIsLoading(false);
+
+    // Auto-focus on message input after a short delay
+    setTimeout(() => {
+      const messageInput = document.querySelector(
+        'input[placeholder*="Message"]'
+      ) as HTMLInputElement;
+      if (messageInput) {
+        messageInput.focus();
+      }
+    }, 100);
   };
 
   const handleMessageSend = async () => {
@@ -213,6 +229,16 @@ export default function MessagesPage() {
     });
 
     setSelectedChat(updatedChat);
+
+    // Auto-focus back to input after sending
+    setTimeout(() => {
+      const messageInput = document.querySelector(
+        'input[placeholder*="Message"]'
+      ) as HTMLInputElement;
+      if (messageInput) {
+        messageInput.focus();
+      }
+    }, 50);
   };
 
   const handleMeetReady = async (agreedA: boolean) => {
@@ -240,20 +266,29 @@ export default function MessagesPage() {
               chats={chats}
               selectedChatId={selectedChat?.id}
               onChatSelect={handleChatSelect}
+              isLoading={isLoading}
             />
           </CardContent>
         </Card>
 
         {/* Right side - Chat area (70%) */}
-        <div className="w-[70%] flex flex-col gap-4">
+        <div className="w-[70%] flex flex-col">
           {selectedChat ? (
             <>
               {/* Top section - Chat header with meet verification */}
-              <Card className="flex-shrink-0">
+              <Card className="flex-shrink-0 mb-4">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                  <div>
-                    <CardTitle>{selectedChat.name}</CardTitle>
-                    {/* <CardDescription></CardDescription> */}
+                  <div className="flex items-center space-x-3">
+                    {/* Show loading indicator in header during chat switch */}
+                    {isLoading ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                    ) : null}
+                    <div>
+                      <CardTitle>{selectedChat.name}</CardTitle>
+                      <CardDescription className="text-sm text-gray-500">
+                        {isLoading ? "Loading..." : "Active now"}
+                      </CardDescription>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -262,6 +297,7 @@ export default function MessagesPage() {
                       onClick={() =>
                         setShowMeetVerification(!showMeetVerification)
                       }
+                      disabled={isLoading}
                     >
                       <MapPin className="h-4 w-4 mr-2" />
                       Meet Up
@@ -270,7 +306,7 @@ export default function MessagesPage() {
                 </CardHeader>
 
                 {/* Meet Verification Section */}
-                {showMeetVerification && (
+                {showMeetVerification && !isLoading && (
                   <CardContent className="pt-0">
                     <MeetVerification
                       agreedA={agreedA || false}
@@ -281,16 +317,20 @@ export default function MessagesPage() {
                 )}
               </Card>
 
-              {/* Chat area */}
-              <Card className="flex-1 flex flex-col">
-                <CardContent className="flex-1 overflow-y-auto p-0">
+              {/* Chat messages area - Fill remaining space exactly */}
+              <div className="flex-1 flex flex-col bg-white rounded-lg border shadow-sm overflow-hidden min-h-0">
+                {/* Chat messages with scroll */}
+                <div className="flex-1 overflow-y-auto">
                   <ChatBubbles
                     messages={chatMessages}
                     userPicture={userPicture}
                     chatUserPicture={chatUserPicture}
+                    isLoading={isLoading}
                   />
-                </CardContent>
-                <CardFooter className="flex-shrink-0 p-4">
+                </div>
+
+                {/* Message input - Fixed at bottom */}
+                <div className="flex-shrink-0 p-4 border-t bg-white">
                   <div className="flex w-full items-center space-x-2">
                     <Input
                       type="text"
@@ -304,21 +344,34 @@ export default function MessagesPage() {
                           handleMessageSend();
                         }
                       }}
+                      disabled={isLoading}
                     />
-                    <Button type="submit" size="sm" onClick={handleMessageSend}>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      onClick={handleMessageSend}
+                      disabled={isLoading || messageToSend.trim() === ""}
+                    >
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
-                </CardFooter>
-              </Card>
+                </div>
+              </div>
             </>
           ) : (
-            <Card className="flex-1 flex items-center justify-center">
-              <CardContent>
-                <p className="text-gray-500 text-center">
-                  Select a conversation to start messaging
-                </p>
-              </CardContent>
+            <Card className="flex-1 flex items-center justify-center relative">
+              {/* Avatar Speech Bubble - Centered in chat area */}
+              {!selectedChat && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <AvatarWithSpeechBubble
+                    message="Select a user to view chat!"
+                    avatarSrc={userPicture || "/default-avatar.png"}
+                    show={true}
+                    persistent={true}
+                    centered={true}
+                  />
+                </div>
+              )}
             </Card>
           )}
         </div>

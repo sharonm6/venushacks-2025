@@ -6,13 +6,29 @@ interface ChatListProps {
   chats: Chat[];
   selectedChatId?: number;
   onChatSelect: (chat: Chat) => void;
+  isLoading?: boolean;
 }
 
 export default function ChatList({
   chats,
   selectedChatId,
   onChatSelect,
+  isLoading = false,
 }: ChatListProps) {
+  const handleChatSelect = (chat: Chat) => {
+    onChatSelect(chat);
+
+    // Auto-focus on message input after a short delay
+    setTimeout(() => {
+      const messageInput = document.querySelector(
+        'input[placeholder*="message"], textarea[placeholder*="message"]'
+      ) as HTMLInputElement | HTMLTextAreaElement;
+      if (messageInput) {
+        messageInput.focus();
+      }
+    }, 300);
+  };
+
   return (
     <div className="space-y-2">
       {chats.map((chat) => (
@@ -22,8 +38,8 @@ export default function ChatList({
             selectedChatId === chat.id
               ? "bg-blue-50 border-blue-200"
               : "hover:bg-gray-50"
-          }`}
-          onClick={() => onChatSelect(chat)}
+          } ${isLoading && selectedChatId === chat.id ? "opacity-50" : ""}`}
+          onClick={() => !isLoading && handleChatSelect(chat)}
         >
           <CardContent className="p-0">
             <div className="flex items-center space-x-3">
@@ -38,8 +54,14 @@ export default function ChatList({
                   </AvatarFallback>
                 </Avatar>
                 {/* Online indicator */}
-                {chat.isOnline && (
+                {chat.isOnline && !isLoading && (
                   <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></div>
+                )}
+                {/* Loading indicator */}
+                {isLoading && selectedChatId === chat.id && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-full">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  </div>
                 )}
               </div>
 

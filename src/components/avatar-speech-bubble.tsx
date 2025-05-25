@@ -4,21 +4,27 @@ interface AvatarWithSpeechBubbleProps {
   message: string;
   avatarSrc: string;
   show: boolean;
+  persistent?: boolean; // New prop for indefinite display
+  centered?: boolean; // New prop to control positioning
 }
 
 export default function AvatarWithSpeechBubble({
   message,
   avatarSrc,
   show,
+  persistent = false,
+  centered = false,
 }: AvatarWithSpeechBubbleProps) {
   if (!show) return null;
 
+  const containerClasses = centered ? "relative" : "fixed top-4 right-4 z-50";
+
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className={containerClasses}>
       <div className="avatar-container">
         <img
           src={avatarSrc}
-          alt="Mail delivery avatar"
+          alt="Chat helper avatar"
           className="w-20 h-20 rounded-full border-4 border-white shadow-lg"
         />
         <div className="speech-bubble">
@@ -44,7 +50,9 @@ export default function AvatarWithSpeechBubble({
 
         .speech-bubble {
           transform: translatey(0px);
-          animation: float 5s ease-in-out infinite;
+          animation: ${persistent
+            ? "float 5s ease-in-out infinite"
+            : "float 5s ease-in-out infinite"};
           text-align: center;
           text-transform: uppercase;
           font-weight: bold;
@@ -64,7 +72,9 @@ export default function AvatarWithSpeechBubble({
 
         .speech-bubble:after {
           transform: translatey(0px);
-          animation: float2 5s ease-in-out infinite;
+          animation: ${persistent
+            ? "float2 5s ease-in-out infinite"
+            : "float2 5s ease-in-out infinite"};
           content: ".";
           font-weight: bold;
           -webkit-text-stroke: 0.5px #c8c8a9;
@@ -88,19 +98,27 @@ export default function AvatarWithSpeechBubble({
 
         @keyframes slideInBounce {
           0% {
-            transform: translateX(100px) translateY(-30px) scale(0.5);
+            transform: ${centered
+              ? "scale(0.5)"
+              : "translateX(100px) translateY(-30px) scale(0.5)"};
             opacity: 0;
           }
           25% {
-            transform: translateX(-10px) translateY(10px) scale(1.1);
+            transform: ${centered
+              ? "scale(1.1)"
+              : "translateX(-10px) translateY(10px) scale(1.1)"};
             opacity: 1;
           }
           50% {
-            transform: translateX(5px) translateY(-5px) scale(0.95);
+            transform: ${centered
+              ? "scale(0.95)"
+              : "translateX(5px) translateY(-5px) scale(0.95)"};
             opacity: 1;
           }
           100% {
-            transform: translateX(0) translateY(0) scale(1);
+            transform: ${centered
+              ? "scale(1)"
+              : "translateX(0) translateY(0) scale(1)"};
             opacity: 1;
           }
         }
