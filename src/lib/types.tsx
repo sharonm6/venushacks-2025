@@ -7,7 +7,7 @@ export interface Profile {
   major: string;
   bio: string;
   isHidden: boolean;
-  // joinedClubs: string;
+  clubs: string;
 }
 
 export interface Conversation {
@@ -44,4 +44,12 @@ export interface ChatMessage {
   message: string;
   timestamp: string;
   isCurrentUser: boolean;
+}
+
+export interface JoinedClub {
+  id: string;
+  name: string;
+  category: string;
+  avatar: string;
+  joinDate: string;
 }

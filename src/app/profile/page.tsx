@@ -31,17 +31,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { index } from "@/services/profiles";
-import { Profile } from "@/lib/types";
+import { Profile, JoinedClub } from "@/lib/types";
 import { profilesCollection } from "@/utils/firebase.browser";
 import { doc, updateDoc } from "firebase/firestore";
-
-// interface JoinedClub {
-//   id: number;
-//   name: string;
-//   category: string;
-//   avatar: string;
-//   joinDate: string;
-// }
+import { clubsData } from "@/lib/clubDatabase";
 
 // interface UserProfile {
 //   id: string;
@@ -78,30 +71,9 @@ export default function ProfilePage() {
     major: "",
     bio: "",
     isHidden: false,
-    // joinedClubs: [
-    //   {
-    //     id: 1,
-    //     name: "WICS",
-    //     category: "Computer Science",
-    //     avatar: "/placeholder.svg?height=40&width=40",
-    //     joinDate: "September 2023",
-    //   },
-    //   {
-    //     id: 2,
-    //     name: "Hack at UCI",
-    //     category: "Technology",
-    //     avatar: "/placeholder.svg?height=40&width=40",
-    //     joinDate: "October 2023",
-    //   },
-    //   {
-    //     id: 3,
-    //     name: "ICS Student Council",
-    //     category: "Student Government",
-    //     avatar: "/placeholder.svg?height=40&width=40",
-    //     joinDate: "January 2024",
-    //   },
-    // ],
+    clubs: "",
   });
+  const [joinedClubs, setJoinedClubs] = useState<JoinedClub[]>([]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState(profile);
@@ -111,10 +83,59 @@ export default function ProfilePage() {
     loadProfiles();
   }, []);
 
+  const getClubsInfo = (clubIds: string): JoinedClub[] => {
+    if (!clubIds.trim()) return [];
+
+    const idsArray = clubIds.split(",").map((id) => id.trim());
+    if (idsArray.length === 0) return [];
+
+    return idsArray
+      .map((item) => {
+        const match = item.match(/^([^(]+)\(([^)]+)\)$/);
+        if (!match) return null;
+
+        const clubId = match[1].trim();
+        const joinDate = match[2].trim();
+
+        const club = clubsData.find((club) => club.id === clubId);
+        if (!club) return null;
+
+        return {
+          id: club.id,
+          name: club.name,
+          category: club.category,
+          avatar: "/avatar0.png",
+          joinDate: joinDate,
+        };
+      })
+      .filter((club): club is JoinedClub => club !== null);
+  };
+
+  const getJoinedClubsInfo = async (profile: Profile) => {
+    if (!profile.clubs || profile.clubs.trim() === "") return [];
+
+    const clubsInfo = getClubsInfo(profile.clubs);
+
+    return clubsInfo.map((club) => ({
+      id: club.id,
+      name: club.name,
+      category: club.category,
+      avatar: club.id + "_logo.png" || "",
+      joinDate:
+        club.joinDate ||
+        new Date().toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+        }),
+    }));
+  };
+
   const loadProfiles = async () => {
     const profile = await index(userid);
-
     setProfile(profile);
+
+    const joinedClubs = await getJoinedClubsInfo(profile);
+    setJoinedClubs(joinedClubs);
   };
 
   const toggleVisibility = () => {
@@ -479,36 +500,13 @@ export default function ProfilePage() {
               <Heart className="w-5 h-5 mr-2" />
               My Clubs
               <Badge className="ml-2 bg-venus-200 text-venus-purple-800">
-                {/* {profile.joinedClubs.length} clubs */}
+                {joinedClubs.length} clubs
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              {/* {profile.joinedClubs. */}
-              {[
-                {
-                  id: 1,
-                  name: "WICS",
-                  category: "Computer Science",
-                  avatar: "/placeholder.svg?height=40&width=40",
-                  joinDate: "September 2023",
-                },
-                {
-                  id: 2,
-                  name: "Hack at UCI",
-                  category: "Technology",
-                  avatar: "/placeholder.svg?height=40&width=40",
-                  joinDate: "October 2023",
-                },
-                {
-                  id: 3,
-                  name: "ICS Student Council",
-                  category: "Student Government",
-                  avatar: "/placeholder.svg?height=40&width=40",
-                  joinDate: "January 2024",
-                },
-              ].map((club) => (
+              {joinedClubs.map((club) => (
                 <div
                   key={club.id}
                   className="flex items-center p-4 rounded-xl border-2 border-venus-100 hover:border-venus-300 transition-all duration-300 hover:shadow-md bg-venus-50/50"
