@@ -1,6 +1,6 @@
 "use client";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
-import { Heart, Star, Users, Trophy, MapPin, MoveRight } from "lucide-react";
+import { Heart, Star, Users, Trophy, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
@@ -59,9 +59,6 @@ export default function ClubPostcard() {
           </div>
           <div className="absolute top-8 right-12 opacity-20 group-hover/card:opacity-40 transition-opacity duration-300 pointer-events-none">
             <Heart className="w-4 h-4 text-pink-400 fill-current" />
-          </div>
-          <div className="absolute bottom-4 left-4 opacity-25 group-hover/card:opacity-50 transition-opacity duration-300 pointer-events-none">
-            <MapPin className="w-5 h-5 text-blue-400" />
           </div>
 
           {/* Postcard Header */}
