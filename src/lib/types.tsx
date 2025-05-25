@@ -77,6 +77,7 @@ export interface FeedItem {
   content: string;
   timestamp: string;
   likes: number;
+  likedUsers: string;
   comments: number;
   commentsString: string;
 }
