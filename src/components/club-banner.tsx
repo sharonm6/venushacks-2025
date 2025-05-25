@@ -8,15 +8,36 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ExternalLink, Check, UserMinus } from "lucide-react";
 import Feed from "@/components/feed";
 import { type Club } from "@/lib/clubDatabase";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ClubBannerProps {
   club: Club;
+  initialJoinStatus?: boolean; // Pass this from parent component based on user's current clubs
 }
 
-export default function ClubBanner({ club }: ClubBannerProps) {
+export default function ClubBanner({
+  club,
+  initialJoinStatus = false,
+}: ClubBannerProps) {
+  const router = useRouter();
+  const [isJoined, setIsJoined] = useState(initialJoinStatus);
+  const [isLoading, setIsLoading] = useState(false);
+
   // Helper function to get club image
   const getClubImage = (clubId: string): string => {
     const imageMap: Record<string, string> = {
@@ -48,6 +69,53 @@ export default function ClubBanner({ club }: ClubBannerProps) {
     }
 
     return links;
+  };
+
+  // Function to handle joining a club
+  const handleJoinClub = async () => {
+    setIsLoading(true);
+    try {
+      // TODO: Replace with actual API call
+      // await joinClub(club.id, userId);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setIsJoined(true);
+
+      // Optional: Show success toast
+      console.log(`Successfully joined ${club.name}`);
+    } catch (error) {
+      console.error("Error joining club:", error);
+      // TODO: Handle error (show toast, etc.)
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to handle leaving a club
+  const handleLeaveClub = async () => {
+    setIsLoading(true);
+    try {
+      // TODO: Replace with actual API call
+      // await leaveClub(club.id, userId);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setIsJoined(false);
+
+      // Navigate to appropriate page after leaving
+      // Options: matches page, dashboard, or clubs list
+      router.push("/matches"); // or '/dashboard' or '/clubs'
+
+      console.log(`Successfully left ${club.name}`);
+    } catch (error) {
+      console.error("Error leaving club:", error);
+      // TODO: Handle error (show toast, etc.)
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const socialLinks = getSocialLinks(club);
@@ -83,12 +151,56 @@ export default function ClubBanner({ club }: ClubBannerProps) {
               <Button variant="outline" size="sm">
                 Create Post
               </Button>
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
-              >
-                Join Club
-              </Button>
+
+              {/* Join/Leave Club Button */}
+              {!isJoined ? (
+                <Button
+                  size="sm"
+                  onClick={handleJoinClub}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 disabled:opacity-50"
+                >
+                  {isLoading ? "Joining..." : "Join Club"}
+                </Button>
+              ) : (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isLoading}
+                      className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Joined
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <UserMinus className="h-5 w-5 text-red-500" />
+                        Leave {club.name}?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to leave{" "}
+                        <strong>{club.fullName}</strong>? You'll lose access to
+                        club posts, events, and resources. You can always rejoin
+                        later.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleLeaveClub}
+                        disabled={isLoading}
+                        className="bg-red-500 hover:bg-red-600 text-white"
+                      >
+                        {isLoading ? "Leaving..." : "Leave Club"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           </CardHeader>
 
